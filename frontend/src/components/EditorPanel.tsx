@@ -1,19 +1,16 @@
 /**
- * Editor Panel Component
+ * Editor Panel Component - DRAAG REGIME EDITION
+ * Brutalist aesthetic with regime styling
  * Left sidebar with file list and text input
- * Phase 4: UI de Etiquetado - Character highlighting and validation
- * Phase 5: Navigation and Image List - Filtering, search, keyboard nav
- * Phase 7: Performance optimizations with React.memo
  */
 
 import { memo, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useStore, type FilterStatus } from '@/store/useStore';
 
 /**
- * Renders text with highlighted characters
- * Invalid chars = red background
- * Unassigned chars = yellow background
- * Memoized for performance
+ * Renders text with highlighted characters - Regime styling
+ * Invalid chars = red background (ERROR)
+ * Unassigned chars = amber background (WARNING)
  */
 const HighlightedText = memo(function HighlightedText({
   text,
@@ -27,33 +24,24 @@ const HighlightedText = memo(function HighlightedText({
   const invalidSet = useMemo(() => new Set(invalidIndices), [invalidIndices]);
   const unassignedSet = useMemo(() => new Set(unassignedIndices), [unassignedIndices]);
 
-  // Build segments for rendering
   const segments = useMemo(() => {
     const result: { char: string; type: 'normal' | 'invalid' | 'unassigned' }[] = [];
-
     for (let i = 0; i < text.length; i++) {
       const char = text[i];
       let type: 'normal' | 'invalid' | 'unassigned' = 'normal';
-
       if (invalidSet.has(i)) {
         type = 'invalid';
       } else if (unassignedSet.has(i)) {
         type = 'unassigned';
       }
-
       result.push({ char, type });
     }
-
     return result;
   }, [text, invalidSet, unassignedSet]);
 
   return (
     <div
-      className="
-        absolute inset-0 px-3 py-2 text-sm
-        pointer-events-none whitespace-pre-wrap break-words
-        font-mono
-      "
+      className="absolute inset-0 px-3 py-2 text-sm pointer-events-none whitespace-pre-wrap break-words font-mono"
       aria-hidden="true"
     >
       {segments.map((segment, i) => {
@@ -61,7 +49,7 @@ const HighlightedText = memo(function HighlightedText({
           return (
             <span
               key={i}
-              className="bg-red-400/60 text-red-900 rounded-sm"
+              className="bg-keposhka-red/80 text-keposhka-white border-b-2 border-keposhka-white"
             >
               {segment.char}
             </span>
@@ -71,13 +59,12 @@ const HighlightedText = memo(function HighlightedText({
           return (
             <span
               key={i}
-              className="bg-amber-300/60 text-amber-900 rounded-sm"
+              className="bg-amber-600/60 text-amber-100"
             >
               {segment.char}
             </span>
           );
         }
-        // Normal character - render invisible to maintain spacing
         return (
           <span key={i} className="text-transparent">
             {segment.char}
@@ -88,7 +75,7 @@ const HighlightedText = memo(function HighlightedText({
   );
 });
 
-// Filter button component - Memoized for performance
+// Filter button - Brutalist style
 const FilterButton = memo(function FilterButton({
   label,
   value,
@@ -107,20 +94,18 @@ const FilterButton = memo(function FilterButton({
     <button
       onClick={() => onClick(value)}
       className={`
-        flex-1 px-2 py-1.5 text-xs font-medium rounded-md
-        transition-all duration-150
+        flex-1 px-2 py-1.5 text-xs font-heading uppercase tracking-wider
+        border-2 transition-all duration-100
         ${
           isActive
-            ? 'bg-indigo-600 text-white shadow-sm'
-            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            ? 'bg-keposhka-red text-keposhka-white border-keposhka-red shadow-brutal-sm'
+            : 'bg-keposhka-black text-keposhka-cream border-keposhka-steel hover:border-keposhka-red'
         }
       `}
     >
       {label}
-      <span
-        className={`ml-1 ${isActive ? 'text-indigo-200' : 'text-slate-400'}`}
-      >
-        ({count})
+      <span className={`ml-1 font-mono ${isActive ? 'text-keposhka-cream/70' : 'text-keposhka-steel'}`}>
+        [{count}]
       </span>
     </button>
   );
@@ -138,7 +123,6 @@ export function EditorPanel() {
     currentImage,
     validation,
     boxes,
-    // Phase 5: Filter & Search
     filterStatus,
     setFilterStatus,
     searchQuery,
@@ -147,7 +131,6 @@ export function EditorPanel() {
     selectNextImage,
     selectPreviousImage,
     isLoadingAnnotation,
-    // Phase 6: Save
     isSaving,
     lastSaveResult,
     saveAnnotation,
@@ -155,30 +138,17 @@ export function EditorPanel() {
     clearSaveResult,
   } = useStore();
 
-  // Filtered images based on status and search query
   const filteredImages = useMemo(() => {
     return images.filter((img) => {
-      // Apply status filter
-      if (filterStatus !== 'all' && img.status !== filterStatus) {
-        return false;
-      }
-      // Apply search query
-      if (
-        searchQuery &&
-        !img.filename.toLowerCase().includes(searchQuery.toLowerCase())
-      ) {
-        return false;
-      }
+      if (filterStatus !== 'all' && img.status !== filterStatus) return false;
+      if (searchQuery && !img.filename.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       return true;
     });
   }, [images, filterStatus, searchQuery]);
 
-  // Count by status for filter buttons
   const statusCounts = useMemo(() => {
     const searchFiltered = searchQuery
-      ? images.filter((img) =>
-          img.filename.toLowerCase().includes(searchQuery.toLowerCase())
-        )
+      ? images.filter((img) => img.filename.toLowerCase().includes(searchQuery.toLowerCase()))
       : images;
     return {
       all: searchFiltered.length,
@@ -187,36 +157,23 @@ export function EditorPanel() {
     };
   }, [images, searchQuery]);
 
-  // Determine if save button should be enabled (moved before useEffect that uses it)
   const canSave = useMemo(() => {
-    // Must have an image selected
     if (!currentImage) return false;
-    // Must have at least one box
     if (boxes.length === 0) return false;
-    // Must be balanced and have no invalid characters
     return validation.isBalanced && validation.invalidCharIndices.length === 0;
   }, [currentImage, boxes.length, validation]);
 
-  // Handle keyboard navigation and Shift+Enter to save
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Shift+Enter to save (works anywhere)
       if (e.key === 'Enter' && e.shiftKey && canSave && !isSaving) {
         e.preventDefault();
         saveAnnotation();
         return;
       }
-
-      // Skip arrow navigation if focus is in textarea or search input
       const activeElement = document.activeElement;
-      if (
-        activeElement?.tagName === 'TEXTAREA' ||
-        (activeElement?.tagName === 'INPUT' &&
-          (activeElement as HTMLInputElement).type === 'text')
-      ) {
+      if (activeElement?.tagName === 'TEXTAREA' || (activeElement?.tagName === 'INPUT' && (activeElement as HTMLInputElement).type === 'text')) {
         return;
       }
-
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         selectNextImage();
@@ -225,41 +182,30 @@ export function EditorPanel() {
         selectPreviousImage();
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectNextImage, selectPreviousImage, canSave, isSaving, saveAnnotation]);
 
-  // Scroll current image into view
   useEffect(() => {
     if (currentImage && listRef.current) {
-      const currentButton = listRef.current.querySelector(
-        `[data-filename="${currentImage.filename}"]`
-      );
+      const currentButton = listRef.current.querySelector(`[data-filename="${currentImage.filename}"]`);
       if (currentButton) {
         currentButton.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
     }
   }, [currentImage]);
 
-  // Clear save result after 3 seconds
   useEffect(() => {
     if (lastSaveResult) {
-      const timer = setTimeout(() => {
-        clearSaveResult();
-      }, 3000);
+      const timer = setTimeout(() => clearSaveResult(), 3000);
       return () => clearTimeout(timer);
     }
   }, [lastSaveResult, clearSaveResult]);
 
-  // Handler for save button
   const handleSave = useCallback(() => {
-    if (canSave && !isSaving) {
-      saveAnnotation();
-    }
+    if (canSave && !isSaving) saveAnnotation();
   }, [canSave, isSaving, saveAnnotation]);
 
-  // Handler for skip button
   const handleSkip = useCallback(() => {
     skipToNextPending();
   }, [skipToNextPending]);
@@ -275,302 +221,297 @@ export function EditorPanel() {
     [setInputText]
   );
 
-  // Status message for the user
   const statusMessage = useMemo(() => {
     if (!currentImage) {
-      return { text: 'Selecciona una imagen', color: 'text-gray-500' };
+      return { text: 'SELECCIONA ARCHIVO', color: 'text-keposhka-steel', icon: '>' };
     }
     if (boxes.length === 0) {
-      return { text: 'Dibuja cajas alrededor de los caracteres', color: 'text-gray-500' };
+      return { text: 'DIBUJA SECTORES', color: 'text-keposhka-steel', icon: '□' };
     }
     if (validation.invalidCharIndices.length > 0) {
       return {
-        text: `${validation.invalidCharIndices.length} carácter(es) inválido(s)`,
-        color: 'text-red-600',
+        text: `ERROR: ${validation.invalidCharIndices.length} CARACTER(ES) PROHIBIDO(S)`,
+        color: 'text-keposhka-red',
+        icon: '!',
       };
     }
     if (!validation.isBalanced) {
       const diff = validation.textCharCount - validation.boxCharCount;
       if (diff > 0) {
-        return {
-          text: `Sobran ${diff} carácter(es) en el texto`,
-          color: 'text-amber-600',
-        };
+        return { text: `EXCESO: +${diff} CARACTERES`, color: 'text-amber-500', icon: '+' };
       } else {
-        return {
-          text: `Faltan ${Math.abs(diff)} carácter(es) en el texto`,
-          color: 'text-amber-600',
-        };
+        return { text: `DEFICIT: ${Math.abs(diff)} CARACTERES`, color: 'text-amber-500', icon: '-' };
       }
     }
-    return { text: 'Listo para guardar', color: 'text-green-600' };
+    return { text: 'AUTORIZADO PARA ARCHIVO', color: 'text-green-500', icon: '✓' };
   }, [currentImage, boxes.length, validation]);
 
   return (
-    <div className="h-full w-72 bg-slate-50 border-r border-slate-200 flex flex-col">
-      {/* Header */}
-      <div className="p-4 border-b border-slate-200 bg-white">
-        <h2 className="text-lg font-semibold text-slate-900 tracking-tight">
-          Keposhka Labeler
-        </h2>
-        <p className="text-xs text-slate-500 mt-0.5">Herramienta de etiquetado</p>
+    <div className="h-full w-80 bg-keposhka-concrete border-r-4 border-keposhka-black flex flex-col noise-overlay">
+      {/* REGIME HEADER */}
+      <div className="panel-header relative overflow-hidden">
+        <div className="relative z-10">
+          <h1 className="text-xl tracking-[0.25em] leading-none">KEPOSHKA</h1>
+          <p className="text-[10px] tracking-[0.3em] text-keposhka-cream/60 mt-0.5">
+            SISTEMA DE ETIQUETADO // DRAAG
+          </p>
+        </div>
+        {/* Diagonal stripes overlay */}
+        <div className="absolute inset-0 bg-diagonal-stripes opacity-30" />
       </div>
 
-      {/* Image List */}
-      <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
-        {/* Search & Filter Controls */}
-        <div className="p-3 border-b border-slate-200 bg-white/50 space-y-3">
-          {/* Search Input */}
+      {/* ARCHIVO SECTION */}
+      <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+        {/* Search & Filter - Industrial Control Panel */}
+        <div className="p-3 border-b-2 border-keposhka-steel bg-keposhka-black/50 space-y-3">
+          {/* Section label */}
+          <div className="flex items-center gap-2">
+            <div className="h-px flex-1 bg-keposhka-steel" />
+            <span className="text-[10px] font-heading uppercase tracking-[0.2em] text-keposhka-steel">
+              ARCHIVOS DE IMAGEN
+            </span>
+            <div className="h-px flex-1 bg-keposhka-steel" />
+          </div>
+
+          {/* Search Input - Brutal style */}
           <div className="relative">
             <input
               ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar imagen..."
+              placeholder="BUSCAR..."
               className="
-                w-full pl-8 pr-3 py-2 text-sm
-                bg-white border border-slate-200 rounded-lg
-                placeholder:text-slate-400
-                focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-400
-                transition-all duration-150
+                w-full pl-8 pr-8 py-2 text-sm font-mono uppercase
+                bg-keposhka-black text-keposhka-cream
+                border-2 border-keposhka-steel
+                placeholder:text-keposhka-steel/50
+                focus:outline-none focus:border-keposhka-red
+                transition-colors duration-100
               "
             />
             <svg
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-keposhka-red"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
+              <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-keposhka-steel hover:text-keposhka-red"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <span className="font-mono text-xs">×</span>
               </button>
             )}
           </div>
 
           {/* Filter Buttons */}
           <div className="flex gap-1">
-            <FilterButton
-              label="Todas"
-              value="all"
-              current={filterStatus}
-              count={statusCounts.all}
-              onClick={setFilterStatus}
-            />
-            <FilterButton
-              label="Hechas"
-              value="done"
-              current={filterStatus}
-              count={statusCounts.done}
-              onClick={setFilterStatus}
-            />
-            <FilterButton
-              label="Pend."
-              value="pending"
-              current={filterStatus}
-              count={statusCounts.pending}
-              onClick={setFilterStatus}
-            />
+            <FilterButton label="TODOS" value="all" current={filterStatus} count={statusCounts.all} onClick={setFilterStatus} />
+            <FilterButton label="LISTO" value="done" current={filterStatus} count={statusCounts.done} onClick={setFilterStatus} />
+            <FilterButton label="PEND." value="pending" current={filterStatus} count={statusCounts.pending} onClick={setFilterStatus} />
           </div>
         </div>
 
-        {/* Image List */}
-        <div ref={listRef} className="flex-1 overflow-y-auto p-2 space-y-1">
+        {/* File List - Dossier style */}
+        <div ref={listRef} className="flex-1 overflow-y-auto bg-keposhka-black/30">
           {isLoadingAnnotation && (
-            <div className="flex items-center justify-center py-2">
-              <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+            <div className="flex items-center justify-center py-4 gap-2">
+              <div className="w-3 h-3 border-2 border-keposhka-red border-t-transparent animate-spin" />
+              <span className="text-xs font-mono text-keposhka-steel uppercase">Cargando datos...</span>
             </div>
           )}
           {filteredImages.length === 0 ? (
-            <div className="text-sm text-slate-400 text-center py-8">
-              {images.length === 0
-                ? 'No hay imágenes'
-                : 'No hay resultados'}
+            <div className="text-center py-12">
+              <div className="text-4xl text-keposhka-steel/30 mb-2">∅</div>
+              <span className="text-xs font-mono text-keposhka-steel uppercase">
+                {images.length === 0 ? 'SIN ARCHIVOS' : 'SIN RESULTADOS'}
+              </span>
             </div>
           ) : (
-            filteredImages.map((image) => (
-              <button
-                key={image.filename}
-                data-filename={image.filename}
-                onClick={() => handleImageSelect(image)}
-                className={`
-                  w-full text-left px-3 py-2 rounded-lg text-sm
-                  transition-all duration-150
-                  ${
-                    currentImage?.filename === image.filename
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                      : 'hover:bg-slate-100 text-slate-700'
-                  }
-                `}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="truncate flex-1 font-medium">
-                    {image.filename}
-                  </span>
-                  <span
-                    className={`ml-2 text-sm flex-shrink-0 ${
-                      currentImage?.filename === image.filename
-                        ? 'text-indigo-200'
-                        : image.status === 'done'
-                          ? 'text-emerald-500'
-                          : 'text-slate-300'
-                    }`}
+            <div className="divide-y divide-keposhka-steel/30">
+              {filteredImages.map((image, index) => {
+                const isActive = currentImage?.filename === image.filename;
+                const isDone = image.status === 'done';
+                return (
+                  <button
+                    key={image.filename}
+                    data-filename={image.filename}
+                    onClick={() => handleImageSelect(image)}
+                    className={`
+                      w-full text-left px-3 py-2.5 font-mono text-sm
+                      border-l-4 transition-all duration-100
+                      flex items-center gap-3
+                      ${isActive
+                        ? 'bg-keposhka-red text-keposhka-white border-l-keposhka-white'
+                        : isDone
+                          ? 'bg-keposhka-black/20 text-keposhka-cream/70 border-l-green-600 hover:bg-keposhka-steel/30'
+                          : 'bg-transparent text-keposhka-cream/80 border-l-transparent hover:bg-keposhka-steel/30 hover:border-l-keposhka-red'
+                      }
+                    `}
                   >
-                    {image.status === 'done' ? '✓' : '○'}
-                  </span>
-                </div>
-              </button>
-            ))
+                    {/* Index number */}
+                    <span className={`text-[10px] w-6 ${isActive ? 'text-keposhka-cream/50' : 'text-keposhka-steel'}`}>
+                      {String(index + 1).padStart(3, '0')}
+                    </span>
+                    {/* Filename */}
+                    <span className="flex-1 truncate uppercase tracking-wide">
+                      {image.filename}
+                    </span>
+                    {/* Status indicator */}
+                    <span className={`text-sm font-bold ${isActive ? 'text-keposhka-white' : isDone ? 'text-green-500' : 'text-keposhka-steel/50'}`}>
+                      {isDone ? '✓' : '○'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           )}
         </div>
 
-        {/* Navigation hint */}
-        <div className="px-3 py-2 border-t border-slate-200 bg-slate-50/80">
-          <p className="text-[10px] text-slate-400 text-center">
-            <kbd className="px-1 py-0.5 bg-slate-200 rounded text-slate-600">↑</kbd>
-            <kbd className="px-1 py-0.5 bg-slate-200 rounded text-slate-600 ml-1">↓</kbd>
-            {' '}para navegar
+        {/* Navigation hint - industrial */}
+        <div className="px-3 py-2 border-t-2 border-keposhka-steel bg-keposhka-black/50">
+          <p className="text-[10px] text-keposhka-steel text-center font-mono">
+            <kbd className="px-1.5 py-0.5 bg-keposhka-steel/30 border border-keposhka-steel text-keposhka-cream">↑</kbd>
+            <kbd className="px-1.5 py-0.5 bg-keposhka-steel/30 border border-keposhka-steel text-keposhka-cream ml-1">↓</kbd>
+            <span className="ml-2 uppercase">Navegar</span>
           </p>
         </div>
       </div>
 
-      {/* Text Input Area with Highlighting */}
-      <div className="p-4 border-t border-slate-200 bg-white">
-        <div className="flex items-center justify-between mb-2">
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            Traducción
-          </label>
-          {/* Character count badge */}
-          <div className="flex items-center gap-2 text-xs">
-            <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-600">
-              Texto: {validation.textCharCount}
+      {/* TRADUCCIÓN SECTION */}
+      <div className="border-t-4 border-keposhka-red bg-keposhka-black">
+        {/* Section header */}
+        <div className="px-4 py-2 bg-keposhka-red/20 border-b border-keposhka-red/50 flex items-center justify-between">
+          <span className="text-xs font-heading uppercase tracking-[0.2em] text-keposhka-red">
+            CAMPO DE TRADUCCIÓN
+          </span>
+          {/* Character count */}
+          <div className="flex items-center gap-2 text-[10px] font-mono">
+            <span className="px-2 py-0.5 bg-keposhka-black border border-keposhka-steel text-keposhka-cream">
+              TXT:{validation.textCharCount}
             </span>
-            <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-600">
-              Cajas: {validation.boxCharCount}
+            <span className="px-2 py-0.5 bg-keposhka-black border border-keposhka-steel text-keposhka-cream">
+              BOX:{validation.boxCharCount}
             </span>
           </div>
         </div>
 
-        {/* Textarea with overlay for highlighting */}
-        <div className="relative">
-          {/* Highlight overlay */}
-          <HighlightedText
-            text={inputText}
-            invalidIndices={validation.invalidCharIndices}
-            unassignedIndices={validation.unassignedTextIndices}
-          />
+        {/* Textarea with overlay */}
+        <div className="p-3">
+          <div className="relative">
+            <HighlightedText
+              text={inputText}
+              invalidIndices={validation.invalidCharIndices}
+              unassignedIndices={validation.unassignedTextIndices}
+            />
+            <textarea
+              ref={textareaRef}
+              value={inputText}
+              onChange={handleTextChange}
+              placeholder="INGRESE TEXTO TRADUCIDO..."
+              className="
+                w-full h-28 px-3 py-2 text-sm font-mono
+                bg-keposhka-black/50 text-keposhka-cream
+                border-2 border-keposhka-steel
+                focus:outline-none focus:border-keposhka-red
+                resize-none relative z-10
+                placeholder:text-keposhka-steel/50 placeholder:uppercase
+              "
+              spellCheck={false}
+            />
+          </div>
 
-          {/* Actual textarea */}
-          <textarea
-            ref={textareaRef}
-            value={inputText}
-            onChange={handleTextChange}
-            placeholder="Escriba la traducción..."
-            className="
-              w-full h-32 px-3 py-2 text-sm
-              bg-transparent border border-slate-300 rounded-lg
-              focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
-              resize-none font-mono
-              relative z-10
-            "
-            spellCheck={false}
-          />
-        </div>
+          {/* Status and help */}
+          <div className="mt-2 flex items-center justify-between">
+            <span className="text-[10px] text-keposhka-steel font-mono uppercase">
+              Enter = Nueva Línea
+            </span>
+            <span className={`text-xs font-heading uppercase tracking-wider flex items-center gap-1 ${statusMessage.color}`}>
+              <span className="font-mono">[{statusMessage.icon}]</span>
+              {statusMessage.text}
+            </span>
+          </div>
 
-        {/* Help text and status */}
-        <div className="mt-2 flex items-center justify-between">
-          <span className="text-[10px] text-slate-400">
-            Enter: nueva línea
-          </span>
-          <span className={`text-xs font-medium ${statusMessage.color}`}>
-            {statusMessage.text}
-          </span>
-        </div>
-
-        {/* Legend */}
-        <div className="mt-3 flex items-center gap-3 text-[10px]">
-          <span className="flex items-center gap-1">
-            <span className="w-3 h-3 bg-red-400/60 rounded-sm"></span>
-            <span className="text-slate-500">Inválido</span>
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="w-3 h-3 bg-amber-300/60 rounded-sm"></span>
-            <span className="text-slate-500">Sin asignar</span>
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="w-3 h-3 bg-emerald-400/60 rounded-sm"></span>
-            <span className="text-slate-500">Asignado</span>
-          </span>
+          {/* Legend */}
+          <div className="mt-3 flex items-center gap-4 text-[10px] font-mono uppercase">
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-3 bg-keposhka-red/80 border border-keposhka-red"></span>
+              <span className="text-keposhka-steel">Prohibido</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-3 bg-amber-600/60 border border-amber-600"></span>
+              <span className="text-keposhka-steel">Excedente</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-3 bg-green-600/60 border border-green-600"></span>
+              <span className="text-keposhka-steel">Asignado</span>
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="p-4 border-t border-slate-200 bg-white space-y-2">
+      {/* ACTION BUTTONS - Regime style */}
+      <div className="p-3 border-t-2 border-keposhka-steel bg-keposhka-black space-y-2">
         {/* Save Result Feedback */}
         {lastSaveResult && (
           <div
             className={`
-              px-3 py-2 text-xs font-medium rounded-lg text-center
-              transition-all duration-300
-              ${
-                lastSaveResult.success
-                  ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                  : 'bg-red-100 text-red-700 border border-red-200'
+              px-3 py-2 text-xs font-mono uppercase text-center
+              border-2 transition-all duration-200
+              ${lastSaveResult.success
+                ? 'bg-green-900/50 text-green-400 border-green-600'
+                : 'bg-keposhka-red/30 text-keposhka-red border-keposhka-red'
               }
             `}
           >
+            {lastSaveResult.success ? '✓ ' : '✗ '}
             {lastSaveResult.message}
           </div>
         )}
 
+        {/* Main save button - Big propaganda style */}
         <button
           onClick={handleSave}
+          disabled={!canSave || isSaving}
           className={`
-            w-full px-4 py-2.5 text-sm font-semibold
-            rounded-lg transition-all duration-150
-            flex items-center justify-center gap-2
-            ${
-              canSave && !isSaving
-                ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-200'
-                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+            w-full px-4 py-3 font-display text-lg uppercase tracking-[0.2em]
+            border-2 transition-all duration-100
+            flex items-center justify-center gap-3
+            ${canSave && !isSaving
+              ? 'bg-keposhka-red text-keposhka-white border-keposhka-black shadow-brutal hover:shadow-brutal-sm hover:translate-x-0.5 hover:translate-y-0.5'
+              : 'bg-keposhka-steel/30 text-keposhka-steel border-keposhka-steel cursor-not-allowed'
             }
           `}
-          disabled={!canSave || isSaving}
         >
           {isSaving ? (
             <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Guardando...
+              <div className="w-4 h-4 border-2 border-keposhka-white border-t-transparent animate-spin" />
+              <span>PROCESANDO...</span>
             </>
           ) : (
             <>
-              Completar
-              <span className="text-emerald-300 text-xs ml-1">(Shift+Enter)</span>
+              <span>COMPLETAR</span>
+              <span className="text-xs font-mono text-keposhka-cream/50">[SHIFT+ENTER]</span>
             </>
           )}
         </button>
+
+        {/* Skip button - Secondary */}
         <button
           onClick={handleSkip}
           className="
-            w-full px-4 py-2 text-sm font-medium
-            bg-slate-100 text-slate-700
-            rounded-lg hover:bg-slate-200 transition-colors
+            w-full px-4 py-2 font-heading text-sm uppercase tracking-wider
+            bg-keposhka-black text-keposhka-cream
+            border-2 border-keposhka-steel
+            hover:border-keposhka-red hover:text-keposhka-red
+            transition-colors duration-100
           "
         >
-          Dejar Pendiente
+          OMITIR → SIGUIENTE PENDIENTE
         </button>
       </div>
     </div>

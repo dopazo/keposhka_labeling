@@ -1,9 +1,6 @@
 /**
- * BoxContextMenu - Right-click context menu for setting box charCount
- * Phase 4: UI de Etiquetado
- * Phase 7: Memoized for performance
- *
- * Allows users to mark boxes as digraphs/trigraphs (1/2/3 characters)
+ * BoxContextMenu - DRAAG REGIME EDITION
+ * Brutalist context menu for setting box charCount (digraphs)
  */
 
 import { memo, useEffect, useRef } from 'react';
@@ -25,7 +22,6 @@ export const BoxContextMenu = memo(function BoxContextMenu({
 }: BoxContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -39,7 +35,6 @@ export const BoxContextMenu = memo(function BoxContextMenu({
       }
     };
 
-    // Delay adding listeners to prevent immediate close
     const timeoutId = setTimeout(() => {
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('keydown', handleEscape);
@@ -53,78 +48,73 @@ export const BoxContextMenu = memo(function BoxContextMenu({
   }, [onClose]);
 
   const options = [
-    { value: 1, label: '1 carácter', description: 'Letra simple (A, b, 5...)' },
-    { value: 2, label: '2 caracteres', description: 'Dígrafo (CH, sh, TH...)' },
-    { value: 3, label: '3 caracteres', description: 'Trígrafo (raro)' },
+    { value: 1, label: '1 CARÁCTER', description: 'LETRA SIMPLE', code: 'A, b, 5...' },
+    { value: 2, label: '2 CARACTERES', description: 'DÍGRAFO', code: 'CH, sh, TH...' },
+    { value: 3, label: '3 CARACTERES', description: 'TRÍGRAFO', code: 'RARO' },
   ];
 
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 animate-in fade-in-0 zoom-in-95 duration-100"
-      style={{
-        left: x,
-        top: y,
-      }}
+      className="fixed z-50"
+      style={{ left: x, top: y }}
     >
-      <div
-        className="
-          min-w-[200px] rounded-lg overflow-hidden
-          bg-gray-900/95 backdrop-blur-sm
-          border border-gray-700/50
-          shadow-2xl shadow-black/50
-        "
-      >
-        {/* Header */}
-        <div className="px-3 py-2 border-b border-gray-700/50 bg-gray-800/50">
-          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-            Caracteres por caja
+      <div className="
+        min-w-[220px] overflow-hidden
+        bg-keposhka-black border-2 border-keposhka-red
+        shadow-brutal
+      ">
+        {/* Header - Regime style */}
+        <div className="px-3 py-2 bg-keposhka-red border-b-2 border-keposhka-black">
+          <span className="text-xs font-display uppercase tracking-[0.15em] text-keposhka-white">
+            CLASIFICACIÓN DE SECTOR
           </span>
         </div>
 
         {/* Options */}
         <div className="py-1">
-          {options.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => {
-                onSelect(option.value);
-                onClose();
-              }}
-              className={`
-                w-full px-3 py-2 text-left
-                flex items-center justify-between gap-3
-                transition-colors duration-75
-                ${
-                  currentCharCount === option.value
-                    ? 'bg-indigo-600/30 text-indigo-300'
-                    : 'text-gray-200 hover:bg-gray-700/50'
-                }
-              `}
-            >
-              <div className="flex flex-col">
-                <span className="text-sm font-medium">{option.label}</span>
-                <span className="text-xs text-gray-500">{option.description}</span>
-              </div>
-              {currentCharCount === option.value && (
-                <svg
-                  className="w-4 h-4 text-indigo-400 flex-shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={3}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              )}
-            </button>
-          ))}
+          {options.map((option) => {
+            const isSelected = currentCharCount === option.value;
+            return (
+              <button
+                key={option.value}
+                onClick={() => {
+                  onSelect(option.value);
+                  onClose();
+                }}
+                className={`
+                  w-full px-3 py-2 text-left
+                  border-l-4 transition-all duration-75
+                  ${isSelected
+                    ? 'bg-keposhka-red/30 border-l-keposhka-red text-keposhka-cream'
+                    : 'border-l-transparent text-keposhka-cream/80 hover:bg-keposhka-steel/50 hover:border-l-keposhka-red/50'
+                  }
+                `}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-heading uppercase tracking-wider">
+                      {option.label}
+                    </span>
+                    <span className="text-[10px] font-mono text-keposhka-steel">
+                      {option.description} — {option.code}
+                    </span>
+                  </div>
+                  {isSelected && (
+                    <div className="w-5 h-5 bg-keposhka-red flex items-center justify-center">
+                      <span className="text-keposhka-white text-xs font-bold">✓</span>
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         {/* Footer hint */}
-        <div className="px-3 py-2 border-t border-gray-700/50 bg-gray-800/30">
-          <span className="text-[10px] text-gray-500">
-            Clic derecho en caja para cambiar
+        <div className="px-3 py-2 bg-keposhka-steel/30 border-t border-keposhka-steel">
+          <span className="text-[9px] font-mono text-keposhka-steel uppercase">
+            ESC para cerrar // Click fuera para cancelar
           </span>
         </div>
       </div>
