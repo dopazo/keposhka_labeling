@@ -1,6 +1,6 @@
 /**
- * StageBoard - Main Canvas Component for Keposhka Labeler
- * Implements Phase 2: Canvas Interactivo + Phase 4: UI de Etiquetado
+ * StageBoard - Main Canvas Component - DRAAG REGIME EDITION
+ * Soviet Brutalist aesthetic for the main labeling canvas
  *
  * Features:
  * - Image loading with auto-fit
@@ -9,7 +9,7 @@
  * - Box transformation (resize/move via Transformer)
  * - Box deletion (Delete/Backspace keys)
  * - Deselection (Esc key or click on empty area)
- * - Right-click context menu for digraph marking (Phase 4)
+ * - Right-click context menu for digraph marking
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Stage, Layer, Rect, Group, Text } from 'react-konva';
@@ -19,7 +19,6 @@ import { UrlImage } from './UrlImage';
 import { BoxTransformer } from './BoxTransformer';
 import { BoxContextMenu } from '../BoxContextMenu';
 
-// Context menu state
 interface ContextMenuState {
   isOpen: boolean;
   x: number;
@@ -27,7 +26,6 @@ interface ContextMenuState {
   boxId: string | null;
 }
 
-// Drawing state for creating new boxes
 interface DrawingState {
   isDrawing: boolean;
   startX: number;
@@ -35,6 +33,19 @@ interface DrawingState {
   currentX: number;
   currentY: number;
 }
+
+// Keposhka regime colors
+const COLORS = {
+  red: '#89181A',
+  redLight: '#A51E21',
+  black: '#000000',
+  white: '#FFFFFF',
+  cream: '#F5F0E6',
+  steel: '#2A2A2A',
+  green: '#2D5016',
+  greenLight: '#4A7C23',
+  amber: '#8B6914',
+};
 
 export function StageBoard() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -55,7 +66,6 @@ export function StageBoard() {
     boxId: null,
   });
 
-  // Store hooks
   const currentImage = useStore((s) => s.currentImage);
   const boxes = useStore((s) => s.boxes);
   const selectedBoxId = useStore((s) => s.selectedBoxId);
@@ -65,17 +75,14 @@ export function StageBoard() {
   const setSelectedBoxId = useStore((s) => s.setSelectedBoxId);
   const updateCharCount = useStore((s) => s.updateCharCount);
 
-  // Keep a map of box refs for transformer
   const boxRefs = useRef<Map<string, Konva.Rect>>(new Map());
 
-  // Derive selected node from selectedBoxId (computed during render)
   const selectedNode = useMemo(() => {
     if (!selectedBoxId) return null;
     return boxRefs.current.get(selectedBoxId) || null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBoxId, boxes.length]);
 
-  // Measure container size
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -88,17 +95,13 @@ export function StageBoard() {
     };
 
     updateSize();
-
     const resizeObserver = new ResizeObserver(updateSize);
     resizeObserver.observe(container);
-
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Handle keyboard events for deletion and deselection
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Only handle if canvas has focus (not typing in textarea)
       const activeElement = document.activeElement;
       if (activeElement?.tagName === 'TEXTAREA' || activeElement?.tagName === 'INPUT') {
         return;
@@ -117,34 +120,22 @@ export function StageBoard() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedBoxId, deleteBox, setSelectedBoxId]);
 
-  // Handle image load
   const handleImageLoad = useCallback((dims: { width: number; height: number; scale: number }) => {
     setImageSize(dims);
   }, []);
 
-  // Generate unique ID
   const generateId = () => crypto.randomUUID();
 
-  // Mouse handlers for drawing boxes
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    // Only start drawing if clicking on empty area (not on a box)
     const clickedOnEmpty = e.target === e.target.getStage() || e.target.name() === 'background-image';
-
     if (!clickedOnEmpty) return;
-
-    // Deselect current selection when clicking on empty
     setSelectedBoxId(null);
 
     const stage = e.target.getStage();
     if (!stage) return;
-
     const pos = stage.getPointerPosition();
     if (!pos) return;
-
-    // Ensure drawing within image bounds
-    if (pos.x < 0 || pos.y < 0 || pos.x > imageSize.width || pos.y > imageSize.height) {
-      return;
-    }
+    if (pos.x < 0 || pos.y < 0 || pos.x > imageSize.width || pos.y > imageSize.height) return;
 
     setDrawing({
       isDrawing: true,
@@ -157,14 +148,11 @@ export function StageBoard() {
 
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
     if (!drawing.isDrawing) return;
-
     const stage = e.target.getStage();
     if (!stage) return;
-
     const pos = stage.getPointerPosition();
     if (!pos) return;
 
-    // Clamp to image bounds
     const clampedX = Math.max(0, Math.min(pos.x, imageSize.width));
     const clampedY = Math.max(0, Math.min(pos.y, imageSize.height));
 
@@ -178,13 +166,11 @@ export function StageBoard() {
   const handleMouseUp = () => {
     if (!drawing.isDrawing) return;
 
-    // Calculate box dimensions
     const x = Math.min(drawing.startX, drawing.currentX);
     const y = Math.min(drawing.startY, drawing.currentY);
     const width = Math.abs(drawing.currentX - drawing.startX);
     const height = Math.abs(drawing.currentY - drawing.startY);
 
-    // Only create box if it has minimum size
     if (width > 5 && height > 5) {
       const newBox = {
         id: generateId(),
@@ -195,7 +181,6 @@ export function StageBoard() {
         charCount: 1,
         isNew: true,
       };
-
       addBox(newBox);
       setSelectedBoxId(newBox.id);
     }
@@ -209,80 +194,47 @@ export function StageBoard() {
     });
   };
 
-  // Handle box click for selection
   const handleBoxClick = (boxId: string) => {
     setSelectedBoxId(boxId);
   };
 
-  // Handle right-click for context menu
-  const handleBoxContextMenu = (
-    boxId: string,
-    e: Konva.KonvaEventObject<PointerEvent>
-  ) => {
+  const handleBoxContextMenu = (boxId: string, e: Konva.KonvaEventObject<PointerEvent>) => {
     e.evt.preventDefault();
-
-    // Get stage position to calculate absolute position
     const stage = stageRef.current;
     if (!stage) return;
-
     const container = containerRef.current;
     if (!container) return;
 
-    // Get the pointer position relative to the page
     const containerRect = container.getBoundingClientRect();
     const pointerPosition = stage.getPointerPosition();
     if (!pointerPosition) return;
 
-    // Calculate absolute position for the context menu
     const menuX = containerRect.left + pointerPosition.x;
     const menuY = containerRect.top + pointerPosition.y;
 
-    setContextMenu({
-      isOpen: true,
-      x: menuX,
-      y: menuY,
-      boxId,
-    });
-
-    // Also select the box
+    setContextMenu({ isOpen: true, x: menuX, y: menuY, boxId });
     setSelectedBoxId(boxId);
   };
 
-  // Handle context menu close
   const handleContextMenuClose = () => {
-    setContextMenu({
-      isOpen: false,
-      x: 0,
-      y: 0,
-      boxId: null,
-    });
+    setContextMenu({ isOpen: false, x: 0, y: 0, boxId: null });
   };
 
-  // Handle char count selection from context menu
   const handleCharCountSelect = (charCount: number) => {
     if (contextMenu.boxId) {
       updateCharCount(contextMenu.boxId, charCount);
     }
   };
 
-  // Handle box drag end
   const handleBoxDragEnd = (boxId: string, e: Konva.KonvaEventObject<DragEvent>) => {
     const node = e.target;
-    updateBox(boxId, {
-      x: node.x(),
-      y: node.y(),
-    });
+    updateBox(boxId, { x: node.x(), y: node.y() });
   };
 
-  // Handle box transform end (resize)
   const handleBoxTransformEnd = (boxId: string, e: Konva.KonvaEventObject<Event>) => {
     const node = e.target as Konva.Rect;
-
-    // Get the actual new dimensions after scaling
     const scaleX = node.scaleX();
     const scaleY = node.scaleY();
-
-    // Reset scale to 1 and apply it to width/height
     node.scaleX(1);
     node.scaleY(1);
 
@@ -294,10 +246,8 @@ export function StageBoard() {
     });
   };
 
-  // Get preview box dimensions while drawing
   const getPreviewBox = () => {
     if (!drawing.isDrawing) return null;
-
     return {
       x: Math.min(drawing.startX, drawing.currentX),
       y: Math.min(drawing.startY, drawing.currentY),
@@ -309,26 +259,72 @@ export function StageBoard() {
   const previewBox = getPreviewBox();
   const imageUrl = currentImage ? `/images/${currentImage.filename}` : null;
 
-  // Placeholder when no image is selected
+  // Placeholder when no image selected
   if (!currentImage) {
     return (
       <div
         ref={containerRef}
-        className="h-full w-full flex items-center justify-center"
+        className="h-full w-full flex items-center justify-center relative overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+          background: `
+            linear-gradient(135deg, ${COLORS.black} 0%, ${COLORS.steel} 50%, ${COLORS.black} 100%)
+          `,
         }}
       >
-        <div className="text-center">
-          <div className="mb-6 text-7xl opacity-30">
-            <span className="inline-block animate-pulse">📷</span>
+        {/* Diagonal stripes background */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            background: `repeating-linear-gradient(
+              45deg,
+              transparent,
+              transparent 20px,
+              ${COLORS.red} 20px,
+              ${COLORS.red} 22px
+            )`,
+          }}
+        />
+
+        {/* Scanlines effect */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-5"
+          style={{
+            background: `repeating-linear-gradient(
+              0deg,
+              transparent,
+              transparent 2px,
+              ${COLORS.black} 2px,
+              ${COLORS.black} 4px
+            )`,
+          }}
+        />
+
+        <div className="text-center relative z-10">
+          {/* Propaganda-style icon */}
+          <div className="mb-6 relative">
+            <div className="w-24 h-24 mx-auto border-4 border-keposhka-red bg-keposhka-black/50 flex items-center justify-center">
+              <span className="text-5xl text-keposhka-red">★</span>
+            </div>
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-keposhka-red px-3 py-1">
+              <span className="text-[10px] font-mono text-keposhka-white uppercase tracking-wider">
+                ZONA DE TRABAJO
+              </span>
+            </div>
           </div>
-          <h3 className="text-xl font-light text-white/60 mb-2 tracking-wide">
-            Selecciona una imagen
+
+          <h3 className="text-2xl font-display uppercase tracking-[0.3em] text-keposhka-cream mb-2">
+            SELECCIONA ARCHIVO
           </h3>
-          <p className="text-sm text-white/30">
-            Usa la lista de la izquierda para comenzar
+          <p className="text-sm font-mono text-keposhka-steel uppercase">
+            Usa el panel izquierdo para comenzar
           </p>
+
+          {/* Decorative lines */}
+          <div className="mt-8 flex items-center justify-center gap-4">
+            <div className="w-16 h-px bg-keposhka-red" />
+            <span className="text-keposhka-red text-xs">◆</span>
+            <div className="w-16 h-px bg-keposhka-red" />
+          </div>
         </div>
       </div>
     );
@@ -337,12 +333,26 @@ export function StageBoard() {
   return (
     <div
       ref={containerRef}
-      className="h-full w-full overflow-hidden"
+      className="h-full w-full overflow-hidden relative"
       style={{
-        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+        background: `linear-gradient(135deg, ${COLORS.black} 0%, ${COLORS.steel} 50%, ${COLORS.black} 100%)`,
       }}
       tabIndex={0}
     >
+      {/* Background pattern */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-5"
+        style={{
+          background: `repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 30px,
+            ${COLORS.red} 30px,
+            ${COLORS.red} 31px
+          )`,
+        }}
+      />
+
       {containerSize.width > 0 && containerSize.height > 0 && (
         <Stage
           ref={stageRef}
@@ -355,12 +365,10 @@ export function StageBoard() {
           style={{ cursor: drawing.isDrawing ? 'crosshair' : 'default' }}
         >
           <Layer>
-            {/* Center the image in the stage */}
             <Group
               x={(containerSize.width - imageSize.width) / 2}
               y={(containerSize.height - imageSize.height) / 2}
             >
-              {/* Background Image */}
               {imageUrl && (
                 <UrlImage
                   src={imageUrl}
@@ -370,7 +378,7 @@ export function StageBoard() {
                 />
               )}
 
-              {/* Existing Bounding Boxes */}
+              {/* Bounding Boxes - Brutalist style */}
               {boxes.map((box) => {
                 const isSelected = box.id === selectedBoxId;
                 const hasLabel = !!box.label;
@@ -390,57 +398,67 @@ export function StageBoard() {
                       y={box.y}
                       width={box.width}
                       height={box.height}
-                      stroke={hasLabel ? '#22c55e' : '#ef4444'}
+                      stroke={hasLabel ? COLORS.greenLight : COLORS.red}
                       strokeWidth={isSelected ? 3 : 2}
-                      dash={hasLabel ? undefined : [8, 4]}
-                      fill={isSelected ? 'rgba(14, 165, 233, 0.15)' : 'rgba(255, 255, 255, 0.05)'}
-                      cornerRadius={2}
+                      dash={hasLabel ? undefined : [6, 4]}
+                      fill={isSelected ? 'rgba(137, 24, 26, 0.2)' : 'rgba(245, 240, 230, 0.05)'}
+                      cornerRadius={0}
                       draggable
                       onClick={() => handleBoxClick(box.id)}
                       onTap={() => handleBoxClick(box.id)}
                       onContextMenu={(e) => handleBoxContextMenu(box.id, e)}
                       onDragEnd={(e) => handleBoxDragEnd(box.id, e)}
                       onTransformEnd={(e) => handleBoxTransformEnd(box.id, e)}
-                      shadowColor={isSelected ? '#0ea5e9' : undefined}
-                      shadowBlur={isSelected ? 10 : 0}
-                      shadowOpacity={isSelected ? 0.5 : 0}
+                      shadowColor={isSelected ? COLORS.red : undefined}
+                      shadowBlur={isSelected ? 15 : 0}
+                      shadowOpacity={isSelected ? 0.6 : 0}
                     />
 
-                    {/* Label below box */}
+                    {/* Label below box - Industrial style */}
                     {box.label && (
-                      <Text
-                        x={box.x}
-                        y={box.y + box.height + 4}
-                        text={box.label}
-                        fontSize={14}
-                        fontFamily="monospace"
-                        fontStyle="bold"
-                        fill="#22c55e"
-                        shadowColor="#000"
-                        shadowBlur={2}
-                        shadowOpacity={0.5}
-                      />
+                      <>
+                        {/* Label background */}
+                        <Rect
+                          x={box.x}
+                          y={box.y + box.height + 2}
+                          width={box.label.length * 10 + 8}
+                          height={18}
+                          fill={COLORS.black}
+                          stroke={COLORS.greenLight}
+                          strokeWidth={1}
+                        />
+                        <Text
+                          x={box.x + 4}
+                          y={box.y + box.height + 5}
+                          text={box.label}
+                          fontSize={12}
+                          fontFamily="JetBrains Mono, monospace"
+                          fontStyle="bold"
+                          fill={COLORS.greenLight}
+                        />
+                      </>
                     )}
 
-                    {/* CharCount badge */}
+                    {/* CharCount badge - Regime style */}
                     {box.charCount > 1 && (
                       <>
                         <Rect
-                          x={box.x + box.width - 18}
-                          y={box.y - 8}
-                          width={20}
-                          height={16}
-                          fill="#6366f1"
-                          cornerRadius={8}
+                          x={box.x + box.width - 20}
+                          y={box.y - 10}
+                          width={22}
+                          height={18}
+                          fill={COLORS.red}
+                          stroke={COLORS.black}
+                          strokeWidth={2}
                         />
                         <Text
                           x={box.x + box.width - 14}
-                          y={box.y - 5}
+                          y={box.y - 7}
                           text={String(box.charCount)}
-                          fontSize={10}
-                          fontFamily="monospace"
+                          fontSize={11}
+                          fontFamily="JetBrains Mono, monospace"
                           fontStyle="bold"
-                          fill="#fff"
+                          fill={COLORS.white}
                         />
                       </>
                     )}
@@ -448,59 +466,86 @@ export function StageBoard() {
                 );
               })}
 
-              {/* Preview Box while drawing */}
+              {/* Preview Box while drawing - Red dashed */}
               {previewBox && previewBox.width > 0 && previewBox.height > 0 && (
                 <Rect
                   x={previewBox.x}
                   y={previewBox.y}
                   width={previewBox.width}
                   height={previewBox.height}
-                  stroke="#0ea5e9"
+                  stroke={COLORS.red}
                   strokeWidth={2}
-                  dash={[6, 3]}
-                  fill="rgba(14, 165, 233, 0.2)"
-                  cornerRadius={2}
+                  dash={[8, 4]}
+                  fill="rgba(137, 24, 26, 0.15)"
+                  cornerRadius={0}
                   listening={false}
                 />
               )}
 
-              {/* Transformer for selected box */}
               <BoxTransformer selectedNode={selectedNode} />
             </Group>
           </Layer>
         </Stage>
       )}
 
-      {/* Instructions overlay */}
+      {/* Instructions overlay - Brutalist industrial */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none">
-        <div className="bg-black/60 backdrop-blur-sm rounded-lg px-4 py-2 text-xs text-white/70 flex gap-4">
-          <span>
-            <kbd className="bg-white/20 px-1.5 py-0.5 rounded text-white/90">Click + Drag</kbd>
-            {' '}Dibujar caja
+        <div className="bg-keposhka-black/90 border-2 border-keposhka-steel px-4 py-2 flex gap-6">
+          <span className="text-[11px] font-mono text-keposhka-cream uppercase">
+            <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
+              DRAG
+            </kbd>
+            Dibujar
           </span>
-          <span>
-            <kbd className="bg-white/20 px-1.5 py-0.5 rounded text-white/90">Del</kbd>
-            {' '}Eliminar
+          <span className="text-[11px] font-mono text-keposhka-cream uppercase">
+            <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
+              DEL
+            </kbd>
+            Eliminar
           </span>
-          <span>
-            <kbd className="bg-white/20 px-1.5 py-0.5 rounded text-white/90">Esc</kbd>
-            {' '}Deseleccionar
+          <span className="text-[11px] font-mono text-keposhka-cream uppercase">
+            <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
+              ESC
+            </kbd>
+            Deseleccionar
           </span>
-          <span>
-            <kbd className="bg-white/20 px-1.5 py-0.5 rounded text-white/90">Clic Derecho</kbd>
-            {' '}Dígrafo
+          <span className="text-[11px] font-mono text-keposhka-cream uppercase">
+            <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
+              R-CLICK
+            </kbd>
+            Dígrafo
           </span>
         </div>
       </div>
 
-      {/* Context Menu for setting charCount */}
+      {/* Top-left file indicator */}
+      <div className="absolute top-4 left-4 pointer-events-none">
+        <div className="bg-keposhka-black/90 border-2 border-keposhka-red px-3 py-1.5 flex items-center gap-2">
+          <span className="text-keposhka-red">★</span>
+          <span className="text-xs font-mono text-keposhka-cream uppercase tracking-wider">
+            {currentImage.filename}
+          </span>
+          <span className={`text-xs font-bold ${currentImage.status === 'done' ? 'text-green-500' : 'text-keposhka-steel'}`}>
+            [{currentImage.status === 'done' ? 'COMPLETO' : 'PENDIENTE'}]
+          </span>
+        </div>
+      </div>
+
+      {/* Box count indicator */}
+      <div className="absolute top-4 right-4 pointer-events-none">
+        <div className="bg-keposhka-black/90 border-2 border-keposhka-steel px-3 py-1.5">
+          <span className="text-xs font-mono text-keposhka-steel uppercase">
+            SECTORES: <span className="text-keposhka-cream font-bold">{boxes.length}</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Context Menu */}
       {contextMenu.isOpen && contextMenu.boxId && (
         <BoxContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          currentCharCount={
-            boxes.find((b) => b.id === contextMenu.boxId)?.charCount ?? 1
-          }
+          currentCharCount={boxes.find((b) => b.id === contextMenu.boxId)?.charCount ?? 1}
           onSelect={handleCharCountSelect}
           onClose={handleContextMenuClose}
         />

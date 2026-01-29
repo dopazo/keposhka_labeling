@@ -2,7 +2,245 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   KEPOSHKA LABELER - DRAAG REGIME AESTHETICS
+   Brutalista / Propaganda Soviética / Distopía
+   ============================================ */
+
+:root {
+  /* Keposhka Official Colors */
+  --keposhka-red: #89181A;
+  --keposhka-red-dark: #6B1315;
+  --keposhka-red-light: #A51E21;
+  --keposhka-black: #000000;
+  --keposhka-white: #FFFFFF;
+  --keposhka-cream: #F5F0E6;
+  --keposhka-steel: #2A2A2A;
+  --keposhka-concrete: #1A1A1A;
+  --keposhka-rust: #4A1A1B;
+
+  /* Functional Colors */
+  --color-success: #2D5016;
+  --color-warning: #8B6914;
+  --color-error: var(--keposhka-red);
+}
+
+/* Base styles */
 body {
   margin: 0;
   min-height: 100vh;
+  background-color: var(--keposhka-concrete);
+  color: var(--keposhka-cream);
+  font-family: 'Oswald', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Selection styling */
+::selection {
+  background-color: var(--keposhka-red);
+  color: var(--keposhka-white);
+}
+
+/* Scrollbar styling - industrial/brutal */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--keposhka-black);
+  border-left: 1px solid var(--keposhka-steel);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--keposhka-red-dark);
+  border: 1px solid var(--keposhka-red);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--keposhka-red);
+}
+
+/* Custom utility classes */
+@layer utilities {
+  /* Propaganda stamp effect */
+  .stamp {
+    @apply relative;
+  }
+
+  .stamp::after {
+    content: 'APROBADO';
+    @apply absolute -right-2 -top-2 text-keposhka-red font-display text-xs;
+    @apply border-2 border-keposhka-red px-2 py-0.5 rounded-sm;
+    @apply transform rotate-[-12deg] opacity-80;
+  }
+
+  /* Diagonal cut corner effect */
+  .cut-corner {
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+  }
+
+  /* Industrial border */
+  .border-industrial {
+    border: 2px solid var(--keposhka-red);
+    box-shadow:
+      inset 0 0 0 1px var(--keposhka-black),
+      4px 4px 0 0 var(--keposhka-black);
+  }
+
+  /* Scan line overlay effect */
+  .scanlines {
+    position: relative;
+  }
+
+  .scanlines::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.1) 2px,
+      rgba(0, 0, 0, 0.1) 4px
+    );
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* Noise texture overlay */
+  .noise-overlay {
+    position: relative;
+  }
+
+  .noise-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+
+  /* Propaganda text styling */
+  .text-propaganda {
+    @apply font-display uppercase tracking-[0.15em];
+    text-shadow: 2px 2px 0 var(--keposhka-black);
+  }
+
+  /* Brutal button base */
+  .btn-brutal {
+    @apply font-heading uppercase tracking-wider;
+    @apply border-2 border-keposhka-black;
+    @apply transition-all duration-100;
+    box-shadow: 3px 3px 0 0 var(--keposhka-black);
+  }
+
+  .btn-brutal:hover {
+    box-shadow: 1px 1px 0 0 var(--keposhka-black);
+    transform: translate(2px, 2px);
+  }
+
+  .btn-brutal:active {
+    box-shadow: 0 0 0 0 var(--keposhka-black);
+    transform: translate(3px, 3px);
+  }
+}
+
+/* Component styles */
+@layer components {
+  /* Panel header with propaganda styling */
+  .panel-header {
+    @apply relative bg-keposhka-red text-keposhka-white;
+    @apply border-b-4 border-keposhka-black;
+    @apply font-display text-xl tracking-[0.2em] uppercase;
+    @apply px-4 py-3;
+  }
+
+  .panel-header::before {
+    content: '';
+    @apply absolute inset-0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(0, 0, 0, 0.1) 10px,
+      rgba(0, 0, 0, 0.1) 20px
+    );
+  }
+
+  /* File list item */
+  .file-item {
+    @apply relative font-mono text-sm;
+    @apply border-l-4 border-transparent;
+    @apply px-3 py-2;
+    @apply transition-all duration-100;
+  }
+
+  .file-item:hover {
+    @apply bg-keposhka-steel border-l-keposhka-red;
+  }
+
+  .file-item.active {
+    @apply bg-keposhka-red text-keposhka-white;
+    @apply border-l-keposhka-white;
+  }
+
+  .file-item.done::after {
+    content: '✓';
+    @apply absolute right-3 top-1/2 -translate-y-1/2;
+    @apply text-keposhka-red font-bold;
+  }
+
+  .file-item.active.done::after {
+    @apply text-keposhka-white;
+  }
+
+  /* Input field - industrial style */
+  .input-industrial {
+    @apply bg-keposhka-black text-keposhka-cream;
+    @apply border-2 border-keposhka-steel;
+    @apply font-mono text-sm;
+    @apply px-3 py-2;
+    @apply focus:outline-none focus:border-keposhka-red;
+    @apply placeholder:text-keposhka-steel;
+  }
+
+  /* Badge/tag styling */
+  .badge-regime {
+    @apply inline-flex items-center justify-center;
+    @apply bg-keposhka-red text-keposhka-white;
+    @apply font-mono text-[10px] font-bold uppercase;
+    @apply px-2 py-0.5;
+    @apply border border-keposhka-black;
+  }
+}
+
+/* Keyframe animations */
+@keyframes regime-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(137, 24, 26, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(137, 24, 26, 0);
+  }
+}
+
+@keyframes warning-flash {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Print styles - for exporting */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
 }
