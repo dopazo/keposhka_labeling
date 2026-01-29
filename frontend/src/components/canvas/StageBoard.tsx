@@ -1,6 +1,6 @@
 /**
  * StageBoard - Main Canvas Component for Keposhka Labeler
- * Implements Phase 2: Canvas Interactivo
+ * Implements Phase 2: Canvas Interactivo + Phase 4: UI de Etiquetado
  *
  * Features:
  * - Image loading with auto-fit
@@ -9,6 +9,7 @@
  * - Box transformation (resize/move via Transformer)
  * - Box deletion (Delete/Backspace keys)
  * - Deselection (Esc key or click on empty area)
+ * - Right-click context menu for digraph marking (Phase 4)
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Stage, Layer, Rect, Group, Text } from 'react-konva';
@@ -16,6 +17,15 @@ import type Konva from 'konva';
 import { useStore } from '@/store/useStore';
 import { UrlImage } from './UrlImage';
 import { BoxTransformer } from './BoxTransformer';
+import { BoxContextMenu } from '../BoxContextMenu';
+
+// Context menu state
+interface ContextMenuState {
+  isOpen: boolean;
+  x: number;
+  y: number;
+  boxId: string | null;
+}
 
 // Drawing state for creating new boxes
 interface DrawingState {
@@ -38,6 +48,12 @@ export function StageBoard() {
     currentX: 0,
     currentY: 0,
   });
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
+    isOpen: false,
+    x: 0,
+    y: 0,
+    boxId: null,
+  });
 
   // Store hooks
   const currentImage = useStore((s) => s.currentImage);
@@ -47,6 +63,7 @@ export function StageBoard() {
   const updateBox = useStore((s) => s.updateBox);
   const deleteBox = useStore((s) => s.deleteBox);
   const setSelectedBoxId = useStore((s) => s.setSelectedBoxId);
+  const updateCharCount = useStore((s) => s.updateCharCount);
 
   // Keep a map of box refs for transformer
   const boxRefs = useRef<Map<string, Konva.Rect>>(new Map());
@@ -197,6 +214,57 @@ export function StageBoard() {
     setSelectedBoxId(boxId);
   };
 
+  // Handle right-click for context menu
+  const handleBoxContextMenu = (
+    boxId: string,
+    e: Konva.KonvaEventObject<PointerEvent>
+  ) => {
+    e.evt.preventDefault();
+
+    // Get stage position to calculate absolute position
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Get the pointer position relative to the page
+    const containerRect = container.getBoundingClientRect();
+    const pointerPosition = stage.getPointerPosition();
+    if (!pointerPosition) return;
+
+    // Calculate absolute position for the context menu
+    const menuX = containerRect.left + pointerPosition.x;
+    const menuY = containerRect.top + pointerPosition.y;
+
+    setContextMenu({
+      isOpen: true,
+      x: menuX,
+      y: menuY,
+      boxId,
+    });
+
+    // Also select the box
+    setSelectedBoxId(boxId);
+  };
+
+  // Handle context menu close
+  const handleContextMenuClose = () => {
+    setContextMenu({
+      isOpen: false,
+      x: 0,
+      y: 0,
+      boxId: null,
+    });
+  };
+
+  // Handle char count selection from context menu
+  const handleCharCountSelect = (charCount: number) => {
+    if (contextMenu.boxId) {
+      updateCharCount(contextMenu.boxId, charCount);
+    }
+  };
+
   // Handle box drag end
   const handleBoxDragEnd = (boxId: string, e: Konva.KonvaEventObject<DragEvent>) => {
     const node = e.target;
@@ -330,6 +398,7 @@ export function StageBoard() {
                       draggable
                       onClick={() => handleBoxClick(box.id)}
                       onTap={() => handleBoxClick(box.id)}
+                      onContextMenu={(e) => handleBoxContextMenu(box.id, e)}
                       onDragEnd={(e) => handleBoxDragEnd(box.id, e)}
                       onTransformEnd={(e) => handleBoxTransformEnd(box.id, e)}
                       shadowColor={isSelected ? '#0ea5e9' : undefined}
@@ -417,8 +486,25 @@ export function StageBoard() {
             <kbd className="bg-white/20 px-1.5 py-0.5 rounded text-white/90">Esc</kbd>
             {' '}Deseleccionar
           </span>
+          <span>
+            <kbd className="bg-white/20 px-1.5 py-0.5 rounded text-white/90">Clic Derecho</kbd>
+            {' '}Dígrafo
+          </span>
         </div>
       </div>
+
+      {/* Context Menu for setting charCount */}
+      {contextMenu.isOpen && contextMenu.boxId && (
+        <BoxContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          currentCharCount={
+            boxes.find((b) => b.id === contextMenu.boxId)?.charCount ?? 1
+          }
+          onSelect={handleCharCountSelect}
+          onClose={handleContextMenuClose}
+        />
+      )}
     </div>
   );
 }
