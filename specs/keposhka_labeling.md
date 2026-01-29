@@ -546,7 +546,7 @@ export default defineConfig({
 
 ### Fase 1: Setup & Estructura Base
 - Inicializar estructura de carpetas (Backend/Frontend)
-- Configurar uv (backend) y npm (frontend)
+- Configurar uv (backend) y bun (frontend)
 - Configurar Vite Proxy y Tailwind/Shadcn
 - Crear endpoint backend `GET /api/images` que lista archivos del directorio
 - Implementar layout de 3 columnas (lista izq, canvas centro, referencia der)

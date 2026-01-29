@@ -9,7 +9,7 @@ Keposhka Labeler is a local web application for labeling images of the fictional
 ## Tech Stack
 
 - **Backend**: FastAPI + Uvicorn, managed with `uv`
-- **Frontend**: React + Vite + TypeScript, Tailwind CSS + Shadcn/UI, react-konva for canvas, zustand for state
+- **Frontend**: React + Vite + TypeScript, Tailwind CSS + Shadcn/UI, react-konva for canvas, zustand for state, managed with `bun`
 
 ## Commands
 
@@ -22,8 +22,8 @@ uv run uvicorn main:app --reload
 ### Frontend
 ```bash
 cd frontend
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 ## Architecture
