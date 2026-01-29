@@ -1,11 +1,12 @@
 /**
  * BoxContextMenu - Right-click context menu for setting box charCount
  * Phase 4: UI de Etiquetado
+ * Phase 7: Memoized for performance
  *
  * Allows users to mark boxes as digraphs/trigraphs (1/2/3 characters)
  */
 
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 
 interface BoxContextMenuProps {
   x: number;
@@ -15,7 +16,7 @@ interface BoxContextMenuProps {
   onClose: () => void;
 }
 
-export function BoxContextMenu({
+export const BoxContextMenu = memo(function BoxContextMenu({
   x,
   y,
   currentCharCount,
@@ -129,4 +130,4 @@ export function BoxContextMenu({
       </div>
     </div>
   );
-}
+});

@@ -1,11 +1,13 @@
 /**
  * Zustand Store for Keposhka Labeler
  * Phase 5: Navigation and Image List
+ * Phase 7: Zod validation for save payload
  */
 import { create } from 'zustand';
 import type { BoundingBox, ImageMeta, AnnotationMetadata } from '@/lib/types';
 import { assignLabels } from '@/lib/sorter';
 import { validateInput } from '@/lib/validator';
+import { validateSavePayload } from '@/lib/schemas';
 
 export type FilterStatus = 'all' | 'done' | 'pending';
 
@@ -339,26 +341,34 @@ export const useStore = create<AppState>((set, get) => ({
       return result;
     }
 
+    // Prepare payload for backend
+    const payload = {
+      filename: state.currentImage.filename,
+      image_width: state.currentImage.width,
+      image_height: state.currentImage.height,
+      translated_text: state.inputText,
+      boxes: state.boxes.map((box) => ({
+        id: box.id,
+        label: box.label || '',
+        char_count: box.charCount,
+        x: box.x,
+        y: box.y,
+        w: box.width,
+        h: box.height,
+      })),
+    };
+
+    // Phase 7: Validate payload with Zod
+    const validation = validateSavePayload(payload);
+    if (!validation.success) {
+      const result = { success: false, message: `Error de validación: ${validation.error}` };
+      set({ lastSaveResult: result });
+      return result;
+    }
+
     set({ isSaving: true, lastSaveResult: null });
 
     try {
-      // Prepare payload for backend
-      const payload = {
-        filename: state.currentImage.filename,
-        image_width: state.currentImage.width,
-        image_height: state.currentImage.height,
-        translated_text: state.inputText,
-        boxes: state.boxes.map((box) => ({
-          id: box.id,
-          label: box.label || '',
-          char_count: box.charCount,
-          x: box.x,
-          y: box.y,
-          w: box.width,
-          h: box.height,
-        })),
-      };
-
       const response = await fetch('/api/save', {
         method: 'POST',
         headers: {

@@ -3,17 +3,19 @@
  * Left sidebar with file list and text input
  * Phase 4: UI de Etiquetado - Character highlighting and validation
  * Phase 5: Navigation and Image List - Filtering, search, keyboard nav
+ * Phase 7: Performance optimizations with React.memo
  */
 
-import { useRef, useCallback, useMemo, useEffect } from 'react';
+import { memo, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useStore, type FilterStatus } from '@/store/useStore';
 
 /**
  * Renders text with highlighted characters
  * Invalid chars = red background
  * Unassigned chars = yellow background
+ * Memoized for performance
  */
-function HighlightedText({
+const HighlightedText = memo(function HighlightedText({
   text,
   invalidIndices,
   unassignedIndices,
@@ -84,10 +86,10 @@ function HighlightedText({
       })}
     </div>
   );
-}
+});
 
-// Filter button component
-function FilterButton({
+// Filter button component - Memoized for performance
+const FilterButton = memo(function FilterButton({
   label,
   value,
   current,
@@ -122,7 +124,7 @@ function FilterButton({
       </span>
     </button>
   );
-}
+});
 
 export function EditorPanel() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
