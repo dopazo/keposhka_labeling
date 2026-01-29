@@ -1,8 +1,9 @@
 /**
  * BoxTransformer Component
  * Handles selection and transformation (resize/move) of bounding boxes
+ * Phase 7: Memoized for performance
  */
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { Transformer } from 'react-konva';
 import type Konva from 'konva';
 
@@ -10,7 +11,7 @@ interface BoxTransformerProps {
   selectedNode: Konva.Rect | null;
 }
 
-export function BoxTransformer({ selectedNode }: BoxTransformerProps) {
+export const BoxTransformer = memo(function BoxTransformer({ selectedNode }: BoxTransformerProps) {
   const transformerRef = useRef<Konva.Transformer>(null);
 
   useEffect(() => {
@@ -59,4 +60,4 @@ export function BoxTransformer({ selectedNode }: BoxTransformerProps) {
       }}
     />
   );
-}
+});

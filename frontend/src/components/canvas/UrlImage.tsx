@@ -1,8 +1,9 @@
 /**
  * UrlImage Component
  * Loads and displays the background image in Konva canvas with auto-fit
+ * Phase 7: Memoized for performance
  */
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { Image as KonvaImage } from 'react-konva';
 import type Konva from 'konva';
 
@@ -13,7 +14,7 @@ interface UrlImageProps {
   onLoad?: (dimensions: { width: number; height: number; scale: number }) => void;
 }
 
-export function UrlImage({ src, containerWidth, containerHeight, onLoad }: UrlImageProps) {
+export const UrlImage = memo(function UrlImage({ src, containerWidth, containerHeight, onLoad }: UrlImageProps) {
   const imageRef = useRef<Konva.Image>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0, scale: 1 });
@@ -70,4 +71,4 @@ export function UrlImage({ src, containerWidth, containerHeight, onLoad }: UrlIm
       listening={false} // Don't capture events on the image
     />
   );
-}
+});

@@ -595,25 +595,25 @@ export default defineConfig({
 - [x] Cargar imagen seleccionada en el canvas
 
 ### Fase 6: Persistencia (YOLO + JSON)
-- [ ] Generar `classes.txt` automáticamente al iniciar (70 clases)
-- [ ] Crear endpoint `POST /api/save`:
+- [x] Generar `classes.txt` automáticamente al iniciar (70 clases)
+- [x] Crear endpoint `POST /api/save`:
   - Convertir píxeles → coordenadas normalizadas (0-1)
   - Guardar archivo `.txt` en formato YOLO (clase x y w h)
   - Guardar archivo `.json` con metadata completa
-- [ ] Crear endpoint `GET /api/annotations/{filename}`:
+- [x] Crear endpoint `GET /api/annotations/{filename}`:
   - Retornar metadata JSON si existe
   - Retornar null/404 si no hay anotación previa
-- [ ] Implementar carga de anotaciones previas al seleccionar imagen
-- [ ] Actualizar estado de imagen a 'done' al guardar exitosamente
+- [x] Implementar carga de anotaciones previas al seleccionar imagen
+- [x] Actualizar estado de imagen a 'done' al guardar exitosamente
 
 ### Fase 7: Flujo Completo y Polish
-- [ ] Implementar botón "Completar" (guarda + marca done + siguiente pendiente)
-- [ ] Implementar botón "Dejar Pendiente" (siguiente sin marcar)
-- [ ] Implementar atajo Shift+Enter (equivalente a "Completar")
-- [ ] Validación exhaustiva con Zod (frontend) y Pydantic (backend)
-- [ ] Manejo de errores: toast/notificaciones para éxito/error
-- [ ] Estados de carga (spinners) durante operaciones async
-- [ ] Optimización de performance (memo, useMemo, useCallback donde sea necesario)
+- [x] Implementar botón "Completar" (guarda + marca done + siguiente pendiente)
+- [x] Implementar botón "Dejar Pendiente" (siguiente sin marcar)
+- [x] Implementar atajo Shift+Enter (equivalente a "Completar")
+- [x] Validación exhaustiva con Zod (frontend) y Pydantic (backend)
+- [x] Manejo de errores: toast/notificaciones para éxito/error
+- [x] Estados de carga (spinners) durante operaciones async
+- [x] Optimización de performance (memo, useMemo, useCallback donde sea necesario)
 
 ---
 
