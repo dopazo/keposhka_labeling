@@ -18,6 +18,11 @@ interface ValidationState {
   invalidCharIndices: number[];
 }
 
+interface SaveResult {
+  success: boolean;
+  message: string;
+}
+
 interface AppState {
   // State
   boxes: BoundingBox[];
@@ -31,6 +36,10 @@ interface AppState {
   filterStatus: FilterStatus;
   searchQuery: string;
   isLoadingAnnotation: boolean;
+
+  // Phase 6: Save State
+  isSaving: boolean;
+  lastSaveResult: SaveResult | null;
 
   // Actions - Boxes
   addBox: (box: BoundingBox) => void;
@@ -52,6 +61,11 @@ interface AppState {
   selectNextImage: () => void;
   selectPreviousImage: () => void;
   loadAnnotation: (filename: string) => Promise<void>;
+
+  // Phase 6: Save Actions
+  saveAnnotation: () => Promise<SaveResult>;
+  skipToNextPending: () => void;
+  clearSaveResult: () => void;
 
   // Actions - Selection
   setSelectedBoxId: (id: string | null) => void;
@@ -125,6 +139,10 @@ export const useStore = create<AppState>((set, get) => ({
   filterStatus: 'all',
   searchQuery: '',
   isLoadingAnnotation: false,
+
+  // Phase 6: Save State
+  isSaving: false,
+  lastSaveResult: null,
 
   // Box Actions - All trigger recalculation
   addBox: (box) =>
@@ -297,6 +315,121 @@ export const useStore = create<AppState>((set, get) => ({
     const prevIndex = currentIndex > 0 ? currentIndex - 1 : filteredImages.length - 1;
     get().selectImage(filteredImages[prevIndex]);
   },
+
+  // Phase 6: Save Actions
+  saveAnnotation: async () => {
+    const state = get();
+
+    // Validate we have what we need
+    if (!state.currentImage) {
+      const result = { success: false, message: 'No hay imagen seleccionada' };
+      set({ lastSaveResult: result });
+      return result;
+    }
+
+    if (state.boxes.length === 0) {
+      const result = { success: false, message: 'No hay cajas dibujadas' };
+      set({ lastSaveResult: result });
+      return result;
+    }
+
+    if (!state.validation.isBalanced || state.validation.invalidCharIndices.length > 0) {
+      const result = { success: false, message: 'La anotación no está balanceada o hay caracteres inválidos' };
+      set({ lastSaveResult: result });
+      return result;
+    }
+
+    set({ isSaving: true, lastSaveResult: null });
+
+    try {
+      // Prepare payload for backend
+      const payload = {
+        filename: state.currentImage.filename,
+        image_width: state.currentImage.width,
+        image_height: state.currentImage.height,
+        translated_text: state.inputText,
+        boxes: state.boxes.map((box) => ({
+          id: box.id,
+          label: box.label || '',
+          char_count: box.charCount,
+          x: box.x,
+          y: box.y,
+          w: box.width,
+          h: box.height,
+        })),
+      };
+
+      const response = await fetch('/api/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        // Update image status to 'done'
+        const currentFilename = state.currentImage.filename;
+        set((state) => ({
+          images: state.images.map((img) =>
+            img.filename === currentFilename ? { ...img, status: 'done' as const } : img
+          ),
+          currentImage: state.currentImage
+            ? { ...state.currentImage, status: 'done' as const }
+            : null,
+          isSaving: false,
+          lastSaveResult: { success: true, message: 'Guardado exitosamente' },
+        }));
+
+        // Navigate to next pending image
+        get().skipToNextPending();
+
+        return { success: true, message: 'Guardado exitosamente' };
+      } else {
+        const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
+        const result = { success: false, message: errorData.detail || 'Error al guardar' };
+        set({ isSaving: false, lastSaveResult: result });
+        return result;
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error de conexión';
+      const result = { success: false, message: errorMessage };
+      set({ isSaving: false, lastSaveResult: result });
+      return result;
+    }
+  },
+
+  skipToNextPending: () => {
+    const state = get();
+    // Find next pending image (from all images, not just filtered)
+    const pendingImages = state.images.filter((img) => img.status === 'pending');
+
+    if (pendingImages.length === 0) {
+      // No more pending images - stay on current or show completion
+      return;
+    }
+
+    // Find the next pending image after current one
+    const currentIndex = state.currentImage
+      ? state.images.findIndex((img) => img.filename === state.currentImage!.filename)
+      : -1;
+
+    // Look for first pending after current index
+    let nextPending = state.images.find(
+      (img, idx) => idx > currentIndex && img.status === 'pending'
+    );
+
+    // If not found, wrap around and get first pending
+    if (!nextPending) {
+      nextPending = pendingImages[0];
+    }
+
+    if (nextPending) {
+      get().selectImage(nextPending);
+    }
+  },
+
+  clearSaveResult: () => set({ lastSaveResult: null }),
 
   // Selection Actions
   setSelectedBoxId: (id) => set({ selectedBoxId: id }),

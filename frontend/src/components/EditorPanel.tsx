@@ -145,6 +145,12 @@ export function EditorPanel() {
     selectNextImage,
     selectPreviousImage,
     isLoadingAnnotation,
+    // Phase 6: Save
+    isSaving,
+    lastSaveResult,
+    saveAnnotation,
+    skipToNextPending,
+    clearSaveResult,
   } = useStore();
 
   // Filtered images based on status and search query
@@ -179,10 +185,27 @@ export function EditorPanel() {
     };
   }, [images, searchQuery]);
 
-  // Handle keyboard navigation
+  // Determine if save button should be enabled (moved before useEffect that uses it)
+  const canSave = useMemo(() => {
+    // Must have an image selected
+    if (!currentImage) return false;
+    // Must have at least one box
+    if (boxes.length === 0) return false;
+    // Must be balanced and have no invalid characters
+    return validation.isBalanced && validation.invalidCharIndices.length === 0;
+  }, [currentImage, boxes.length, validation]);
+
+  // Handle keyboard navigation and Shift+Enter to save
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Skip if focus is in textarea or search input
+      // Shift+Enter to save (works anywhere)
+      if (e.key === 'Enter' && e.shiftKey && canSave && !isSaving) {
+        e.preventDefault();
+        saveAnnotation();
+        return;
+      }
+
+      // Skip arrow navigation if focus is in textarea or search input
       const activeElement = document.activeElement;
       if (
         activeElement?.tagName === 'TEXTAREA' ||
@@ -203,7 +226,7 @@ export function EditorPanel() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectNextImage, selectPreviousImage]);
+  }, [selectNextImage, selectPreviousImage, canSave, isSaving, saveAnnotation]);
 
   // Scroll current image into view
   useEffect(() => {
@@ -217,6 +240,28 @@ export function EditorPanel() {
     }
   }, [currentImage]);
 
+  // Clear save result after 3 seconds
+  useEffect(() => {
+    if (lastSaveResult) {
+      const timer = setTimeout(() => {
+        clearSaveResult();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [lastSaveResult, clearSaveResult]);
+
+  // Handler for save button
+  const handleSave = useCallback(() => {
+    if (canSave && !isSaving) {
+      saveAnnotation();
+    }
+  }, [canSave, isSaving, saveAnnotation]);
+
+  // Handler for skip button
+  const handleSkip = useCallback(() => {
+    skipToNextPending();
+  }, [skipToNextPending]);
+
   const handleImageSelect = (image: (typeof images)[0]) => {
     selectImage(image);
   };
@@ -227,16 +272,6 @@ export function EditorPanel() {
     },
     [setInputText]
   );
-
-  // Determine if save button should be enabled
-  const canSave = useMemo(() => {
-    // Must have an image selected
-    if (!currentImage) return false;
-    // Must have at least one box
-    if (boxes.length === 0) return false;
-    // Must be balanced and have no invalid characters
-    return validation.isBalanced && validation.invalidCharIndices.length === 0;
-  }, [currentImage, boxes.length, validation]);
 
   // Status message for the user
   const statusMessage = useMemo(() => {
@@ -482,21 +517,51 @@ export function EditorPanel() {
 
       {/* Action Buttons */}
       <div className="p-4 border-t border-slate-200 bg-white space-y-2">
+        {/* Save Result Feedback */}
+        {lastSaveResult && (
+          <div
+            className={`
+              px-3 py-2 text-xs font-medium rounded-lg text-center
+              transition-all duration-300
+              ${
+                lastSaveResult.success
+                  ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                  : 'bg-red-100 text-red-700 border border-red-200'
+              }
+            `}
+          >
+            {lastSaveResult.message}
+          </div>
+        )}
+
         <button
+          onClick={handleSave}
           className={`
             w-full px-4 py-2.5 text-sm font-semibold
             rounded-lg transition-all duration-150
+            flex items-center justify-center gap-2
             ${
-              canSave
+              canSave && !isSaving
                 ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-200'
                 : 'bg-slate-200 text-slate-400 cursor-not-allowed'
             }
           `}
-          disabled={!canSave}
+          disabled={!canSave || isSaving}
         >
-          {canSave ? 'Completar' : 'Completar'}
+          {isSaving ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Guardando...
+            </>
+          ) : (
+            <>
+              Completar
+              <span className="text-emerald-300 text-xs ml-1">(Shift+Enter)</span>
+            </>
+          )}
         </button>
         <button
+          onClick={handleSkip}
           className="
             w-full px-4 py-2 text-sm font-medium
             bg-slate-100 text-slate-700
