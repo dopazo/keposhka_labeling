@@ -307,7 +307,7 @@ export function StageBoard() {
   };
 
   const previewBox = getPreviewBox();
-  const imageUrl = currentImage ? `/api/images/${currentImage.filename}` : null;
+  const imageUrl = currentImage ? `/images/${currentImage.filename}` : null;
 
   // Placeholder when no image is selected
   if (!currentImage) {

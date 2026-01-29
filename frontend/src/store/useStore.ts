@@ -1,10 +1,13 @@
 /**
  * Zustand Store for Keposhka Labeler
+ * Phase 5: Navigation and Image List
  */
 import { create } from 'zustand';
-import type { BoundingBox, ImageMeta } from '@/lib/types';
+import type { BoundingBox, ImageMeta, AnnotationMetadata } from '@/lib/types';
 import { assignLabels } from '@/lib/sorter';
 import { validateInput } from '@/lib/validator';
+
+export type FilterStatus = 'all' | 'done' | 'pending';
 
 interface ValidationState {
   isBalanced: boolean;
@@ -24,6 +27,11 @@ interface AppState {
   selectedBoxId: string | null;
   validation: ValidationState;
 
+  // Phase 5: Filter & Search State
+  filterStatus: FilterStatus;
+  searchQuery: string;
+  isLoadingAnnotation: boolean;
+
   // Actions - Boxes
   addBox: (box: BoundingBox) => void;
   updateBox: (id: string, updates: Partial<BoundingBox>) => void;
@@ -35,6 +43,15 @@ interface AppState {
   setInputText: (text: string) => void;
   setCurrentImage: (image: ImageMeta | null) => void;
   setImages: (images: ImageMeta[]) => void;
+  updateImageStatus: (filename: string, status: 'pending' | 'done') => void;
+
+  // Phase 5: Actions - Filter & Search
+  setFilterStatus: (status: FilterStatus) => void;
+  setSearchQuery: (query: string) => void;
+  selectImage: (image: ImageMeta) => Promise<void>;
+  selectNextImage: () => void;
+  selectPreviousImage: () => void;
+  loadAnnotation: (filename: string) => Promise<void>;
 
   // Actions - Selection
   setSelectedBoxId: (id: string | null) => void;
@@ -76,7 +93,26 @@ const initialValidation: ValidationState = {
   invalidCharIndices: [],
 };
 
-export const useStore = create<AppState>((set) => ({
+// Helper to get filtered images based on current filter and search
+function getFilteredImages(
+  images: ImageMeta[],
+  filterStatus: FilterStatus,
+  searchQuery: string
+): ImageMeta[] {
+  return images.filter((img) => {
+    // Apply status filter
+    if (filterStatus !== 'all' && img.status !== filterStatus) {
+      return false;
+    }
+    // Apply search query
+    if (searchQuery && !img.filename.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+    return true;
+  });
+}
+
+export const useStore = create<AppState>((set, get) => ({
   // Initial State
   boxes: [],
   currentImage: null,
@@ -84,6 +120,11 @@ export const useStore = create<AppState>((set) => ({
   images: [],
   selectedBoxId: null,
   validation: initialValidation,
+
+  // Phase 5: Filter & Search State
+  filterStatus: 'all',
+  searchQuery: '',
+  isLoadingAnnotation: false,
 
   // Box Actions - All trigger recalculation
   addBox: (box) =>
@@ -154,6 +195,108 @@ export const useStore = create<AppState>((set) => ({
   setCurrentImage: (image) => set({ currentImage: image }),
 
   setImages: (images) => set({ images }),
+
+  updateImageStatus: (filename, status) =>
+    set((state) => ({
+      images: state.images.map((img) =>
+        img.filename === filename ? { ...img, status } : img
+      ),
+    })),
+
+  // Phase 5: Filter & Search Actions
+  setFilterStatus: (status) => set({ filterStatus: status }),
+
+  setSearchQuery: (query) => set({ searchQuery: query }),
+
+  loadAnnotation: async (filename) => {
+    set({ isLoadingAnnotation: true });
+    try {
+      const response = await fetch(`/api/annotations/${filename}`);
+      if (response.ok) {
+        const data: AnnotationMetadata = await response.json();
+        // Load boxes and text from annotation
+        const boxes: BoundingBox[] = data.boxes.map((box) => ({
+          id: box.id,
+          x: box.x,
+          y: box.y,
+          width: box.width,
+          height: box.height,
+          charCount: box.charCount,
+          label: box.label,
+        }));
+        const result = recalculateState(boxes, data.translatedText);
+        set({
+          boxes: result.boxes,
+          inputText: data.translatedText,
+          validation: result.validation,
+          isLoadingAnnotation: false,
+        });
+      } else if (response.status === 404) {
+        // No existing annotation, start fresh
+        set({
+          boxes: [],
+          inputText: '',
+          validation: initialValidation,
+          isLoadingAnnotation: false,
+        });
+      } else {
+        console.error('Error loading annotation:', response.statusText);
+        set({ isLoadingAnnotation: false });
+      }
+    } catch (error) {
+      console.error('Error loading annotation:', error);
+      set({ isLoadingAnnotation: false });
+    }
+  },
+
+  selectImage: async (image) => {
+    const state = get();
+    // Don't reload if same image
+    if (state.currentImage?.filename === image.filename) return;
+
+    // Reset and load new image
+    set({
+      currentImage: image,
+      selectedBoxId: null,
+    });
+
+    // Load existing annotations if available
+    await get().loadAnnotation(image.filename);
+  },
+
+  selectNextImage: () => {
+    const state = get();
+    const filteredImages = getFilteredImages(
+      state.images,
+      state.filterStatus,
+      state.searchQuery
+    );
+    if (filteredImages.length === 0) return;
+
+    const currentIndex = state.currentImage
+      ? filteredImages.findIndex((img) => img.filename === state.currentImage!.filename)
+      : -1;
+
+    const nextIndex = currentIndex < filteredImages.length - 1 ? currentIndex + 1 : 0;
+    get().selectImage(filteredImages[nextIndex]);
+  },
+
+  selectPreviousImage: () => {
+    const state = get();
+    const filteredImages = getFilteredImages(
+      state.images,
+      state.filterStatus,
+      state.searchQuery
+    );
+    if (filteredImages.length === 0) return;
+
+    const currentIndex = state.currentImage
+      ? filteredImages.findIndex((img) => img.filename === state.currentImage!.filename)
+      : 0;
+
+    const prevIndex = currentIndex > 0 ? currentIndex - 1 : filteredImages.length - 1;
+    get().selectImage(filteredImages[prevIndex]);
+  },
 
   // Selection Actions
   setSelectedBoxId: (id) => set({ selectedBoxId: id }),
