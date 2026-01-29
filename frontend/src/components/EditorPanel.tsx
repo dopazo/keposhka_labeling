@@ -250,17 +250,11 @@ export function EditorPanel() {
     <div className="h-full w-80 bg-keposhka-concrete border-r-4 border-keposhka-black flex flex-col noise-overlay">
       {/* REGIME HEADER */}
       <div className="panel-header relative overflow-hidden">
-        <div className="relative z-10 flex items-center gap-3">
-          {/* Regime emblem */}
-          <div className="w-8 h-8 bg-keposhka-black flex items-center justify-center">
-            <span className="text-keposhka-red text-lg font-display">K</span>
-          </div>
-          <div>
-            <h1 className="text-xl tracking-[0.25em] leading-none">KEPOSHKA</h1>
-            <p className="text-[10px] tracking-[0.3em] text-keposhka-cream/60 mt-0.5">
-              SISTEMA DE ETIQUETADO // DRAAG
-            </p>
-          </div>
+        <div className="relative z-10">
+          <h1 className="text-xl tracking-[0.25em] leading-none">KEPOSHKA</h1>
+          <p className="text-[10px] tracking-[0.3em] text-keposhka-cream/60 mt-0.5">
+            SISTEMA DE ETIQUETADO // DRAAG
+          </p>
         </div>
         {/* Diagonal stripes overlay */}
         <div className="absolute inset-0 bg-diagonal-stripes opacity-30" />
@@ -500,7 +494,6 @@ export function EditorPanel() {
             </>
           ) : (
             <>
-              <span className="text-2xl font-display">▸</span>
               <span>COMPLETAR</span>
               <span className="text-xs font-mono text-keposhka-cream/50">[SHIFT+ENTER]</span>
             </>

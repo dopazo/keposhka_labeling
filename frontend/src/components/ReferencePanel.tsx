@@ -101,7 +101,7 @@ export function ReferencePanel() {
             })}
           </div>
           <p className="mt-2 text-[10px] font-mono text-keposhka-steel uppercase">
-            ◆ Clic derecho en caja → marcar como dígrafo
+            Clic derecho en caja para marcar como dígrafo
           </p>
         </section>
 
@@ -177,8 +177,7 @@ export function ReferencePanel() {
           <span className="text-keposhka-steel">
             CLASIFICACIÓN: PÚBLICO
           </span>
-          <span className="text-keposhka-red flex items-center gap-1">
-            <span className="font-display">◆</span>
+          <span className="text-keposhka-red">
             DRAAG CULTURAL DEPT.
           </span>
         </div>
