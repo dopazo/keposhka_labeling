@@ -3,6 +3,17 @@
  */
 import { create } from 'zustand';
 import type { BoundingBox, ImageMeta } from '@/lib/types';
+import { assignLabels } from '@/lib/sorter';
+import { validateInput } from '@/lib/validator';
+
+interface ValidationState {
+  isBalanced: boolean;
+  textCharCount: number;
+  boxCharCount: number;
+  unassignedTextIndices: number[];
+  unassignedBoxIds: string[];
+  invalidCharIndices: number[];
+}
 
 interface AppState {
   // State
@@ -11,6 +22,7 @@ interface AppState {
   inputText: string;
   images: ImageMeta[];
   selectedBoxId: string | null;
+  validation: ValidationState;
 
   // Actions - Boxes
   addBox: (box: BoundingBox) => void;
@@ -29,7 +41,40 @@ interface AppState {
 
   // Actions - Reset
   reset: () => void;
+
+  // Actions - Recalculate
+  recalculate: () => void;
 }
+
+// Helper function to recalculate labels and validation
+function recalculateState(boxes: BoundingBox[], text: string): {
+  boxes: BoundingBox[];
+  validation: ValidationState;
+} {
+  const sortResult = assignLabels(boxes, text);
+  const inputValidation = validateInput(text);
+
+  return {
+    boxes: sortResult.boxes,
+    validation: {
+      isBalanced: sortResult.isBalanced && inputValidation.isValid,
+      textCharCount: sortResult.textCharCount,
+      boxCharCount: sortResult.boxCharCount,
+      unassignedTextIndices: sortResult.unassignedTextIndices,
+      unassignedBoxIds: sortResult.unassignedBoxIds,
+      invalidCharIndices: inputValidation.invalidChars.map((c) => c.index),
+    },
+  };
+}
+
+const initialValidation: ValidationState = {
+  isBalanced: true,
+  textCharCount: 0,
+  boxCharCount: 0,
+  unassignedTextIndices: [],
+  unassignedBoxIds: [],
+  invalidCharIndices: [],
+};
 
 export const useStore = create<AppState>((set) => ({
   // Initial State
@@ -38,37 +83,73 @@ export const useStore = create<AppState>((set) => ({
   inputText: '',
   images: [],
   selectedBoxId: null,
+  validation: initialValidation,
 
-  // Box Actions
+  // Box Actions - All trigger recalculation
   addBox: (box) =>
-    set((state) => ({
-      boxes: [...state.boxes, box],
-    })),
+    set((state) => {
+      const newBoxes = [...state.boxes, box];
+      const result = recalculateState(newBoxes, state.inputText);
+      return {
+        boxes: result.boxes,
+        validation: result.validation,
+      };
+    }),
 
   updateBox: (id, updates) =>
-    set((state) => ({
-      boxes: state.boxes.map((box) =>
+    set((state) => {
+      const newBoxes = state.boxes.map((box) =>
         box.id === id ? { ...box, ...updates } : box
-      ),
-    })),
+      );
+      const result = recalculateState(newBoxes, state.inputText);
+      return {
+        boxes: result.boxes,
+        validation: result.validation,
+      };
+    }),
 
   deleteBox: (id) =>
-    set((state) => ({
-      boxes: state.boxes.filter((box) => box.id !== id),
-      selectedBoxId: state.selectedBoxId === id ? null : state.selectedBoxId,
-    })),
+    set((state) => {
+      const newBoxes = state.boxes.filter((box) => box.id !== id);
+      const result = recalculateState(newBoxes, state.inputText);
+      return {
+        boxes: result.boxes,
+        validation: result.validation,
+        selectedBoxId: state.selectedBoxId === id ? null : state.selectedBoxId,
+      };
+    }),
 
-  setBoxes: (boxes) => set({ boxes }),
+  setBoxes: (boxes) =>
+    set((state) => {
+      const result = recalculateState(boxes, state.inputText);
+      return {
+        boxes: result.boxes,
+        validation: result.validation,
+      };
+    }),
 
   updateCharCount: (id, charCount) =>
-    set((state) => ({
-      boxes: state.boxes.map((box) =>
+    set((state) => {
+      const newBoxes = state.boxes.map((box) =>
         box.id === id ? { ...box, charCount } : box
-      ),
-    })),
+      );
+      const result = recalculateState(newBoxes, state.inputText);
+      return {
+        boxes: result.boxes,
+        validation: result.validation,
+      };
+    }),
 
-  // Text & Image Actions
-  setInputText: (text) => set({ inputText: text }),
+  // Text Actions - Triggers recalculation
+  setInputText: (text) =>
+    set((state) => {
+      const result = recalculateState(state.boxes, text);
+      return {
+        inputText: text,
+        boxes: result.boxes,
+        validation: result.validation,
+      };
+    }),
 
   setCurrentImage: (image) => set({ currentImage: image }),
 
@@ -83,5 +164,16 @@ export const useStore = create<AppState>((set) => ({
       boxes: [],
       inputText: '',
       selectedBoxId: null,
+      validation: initialValidation,
+    }),
+
+  // Manual recalculation (if needed)
+  recalculate: () =>
+    set((state) => {
+      const result = recalculateState(state.boxes, state.inputText);
+      return {
+        boxes: result.boxes,
+        validation: result.validation,
+      };
     }),
 }));
