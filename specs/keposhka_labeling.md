@@ -577,14 +577,14 @@ export default defineConfig({
 - [x] Re-calcular asignaciones en cada cambio (texto, cajas, posiciones)
 
 ### Fase 4: UI de Etiquetado
-- [ ] Renderizar etiquetas de texto debajo de cada caja en el canvas
-- [ ] Implementar menú contextual (clic derecho) para marcar dígrafos (1/2/3 chars)
-- [ ] Implementar feedback visual en tiempo real:
+- [x] Renderizar etiquetas de texto debajo de cada caja en el canvas
+- [x] Implementar menú contextual (clic derecho) para marcar dígrafos (1/2/3 chars)
+- [x] Implementar feedback visual en tiempo real:
   - Cajas asignadas: borde verde continuo
   - Cajas sin asignar: borde rojo punteado
   - Caracteres inválidos en textarea: fondo rojo
   - Caracteres no asignados (sobran): fondo amarillo
-- [ ] Deshabilitar botón "Guardar" si hay desbalance o errores
+- [x] Deshabilitar botón "Guardar" si hay desbalance o errores
 
 ### Fase 5: Navegación y Lista de Imágenes
 - [ ] Implementar lista de imágenes en sidebar izquierdo
