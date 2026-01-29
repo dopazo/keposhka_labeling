@@ -564,17 +564,17 @@ export default defineConfig({
 - [x] Feedback visual básico: borde de caja seleccionada
 
 ### Fase 3: Algoritmo de Ordenamiento y Validación
-- [ ] Desarrollar `validator.ts`:
+- [x] Desarrollar `validator.ts`:
   - Constante `KEPOSHKA_ALPHABET` (70 caracteres)
   - Funciones `labelToClassId()` y `classIdToLabel()`
   - Función `validateInput()` para detectar caracteres inválidos
-- [ ] Desarrollar `sorter.ts`:
+- [x] Desarrollar `sorter.ts`:
   - Agrupar cajas en renglones (umbral dinámico: 30% altura promedio)
   - Ordenar izquierda→derecha dentro de cada renglón
   - Saltar espacios en el texto
   - Consumir `charCount` caracteres por caja
-- [ ] Conectar textarea multilinea con store de Zustand
-- [ ] Re-calcular asignaciones en cada cambio (texto, cajas, posiciones)
+- [x] Conectar textarea multilinea con store de Zustand
+- [x] Re-calcular asignaciones en cada cambio (texto, cajas, posiciones)
 
 ### Fase 4: UI de Etiquetado
 - [ ] Renderizar etiquetas de texto debajo de cada caja en el canvas
