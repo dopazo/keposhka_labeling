@@ -545,75 +545,75 @@ export default defineConfig({
 ## 14. Fases de Desarrollo
 
 ### Fase 1: Setup & Estructura Base
-- Inicializar estructura de carpetas (Backend/Frontend)
-- Configurar uv (backend) y bun (frontend)
-- Configurar Vite Proxy y Tailwind/Shadcn
-- Crear endpoint backend `GET /api/images` que lista archivos del directorio
-- Implementar layout de 3 columnas (lista izq, canvas centro, referencia der)
-- Implementar panel de referencia con placeholder ("Imagen pendiente")
-- Crear store de Zustand con estado inicial (boxes, currentImage, inputText)
+- [x] Inicializar estructura de carpetas (Backend/Frontend)
+- [x] Configurar uv (backend) y bun (frontend)
+- [x] Configurar Vite Proxy y Tailwind/Shadcn
+- [x] Crear endpoint backend `GET /api/images` que lista archivos del directorio
+- [x] Implementar layout de 3 columnas (lista izq, canvas centro, referencia der)
+- [x] Implementar panel de referencia con placeholder ("Imagen pendiente")
+- [x] Crear store de Zustand con estado inicial (boxes, currentImage, inputText)
 
 ### Fase 2: Canvas Interactivo
-- Implementar carga de imagen en Konva (UrlImage)
-- Implementar auto-fit de imagen al viewport (escalar para que quepa)
-- Implementar dibujo de rectángulos (mouseDown → mouseMove → mouseUp)
-- Implementar selección de cajas (clic para seleccionar)
-- Implementar BoxTransformer para redimensionar/mover cajas
-- Implementar eliminación de cajas (Delete/Backspace)
-- Implementar deselección (Esc)
-- Feedback visual básico: borde de caja seleccionada
+- [ ] Implementar carga de imagen en Konva (UrlImage)
+- [ ] Implementar auto-fit de imagen al viewport (escalar para que quepa)
+- [ ] Implementar dibujo de rectángulos (mouseDown → mouseMove → mouseUp)
+- [ ] Implementar selección de cajas (clic para seleccionar)
+- [ ] Implementar BoxTransformer para redimensionar/mover cajas
+- [ ] Implementar eliminación de cajas (Delete/Backspace)
+- [ ] Implementar deselección (Esc)
+- [ ] Feedback visual básico: borde de caja seleccionada
 
 ### Fase 3: Algoritmo de Ordenamiento y Validación
-- Desarrollar `validator.ts`:
+- [ ] Desarrollar `validator.ts`:
   - Constante `KEPOSHKA_ALPHABET` (70 caracteres)
   - Funciones `labelToClassId()` y `classIdToLabel()`
   - Función `validateInput()` para detectar caracteres inválidos
-- Desarrollar `sorter.ts`:
+- [ ] Desarrollar `sorter.ts`:
   - Agrupar cajas en renglones (umbral dinámico: 30% altura promedio)
   - Ordenar izquierda→derecha dentro de cada renglón
   - Saltar espacios en el texto
   - Consumir `charCount` caracteres por caja
-- Conectar textarea multilinea con store de Zustand
-- Re-calcular asignaciones en cada cambio (texto, cajas, posiciones)
+- [ ] Conectar textarea multilinea con store de Zustand
+- [ ] Re-calcular asignaciones en cada cambio (texto, cajas, posiciones)
 
 ### Fase 4: UI de Etiquetado
-- Renderizar etiquetas de texto debajo de cada caja en el canvas
-- Implementar menú contextual (clic derecho) para marcar dígrafos (1/2/3 chars)
-- Implementar feedback visual en tiempo real:
+- [ ] Renderizar etiquetas de texto debajo de cada caja en el canvas
+- [ ] Implementar menú contextual (clic derecho) para marcar dígrafos (1/2/3 chars)
+- [ ] Implementar feedback visual en tiempo real:
   - Cajas asignadas: borde verde continuo
   - Cajas sin asignar: borde rojo punteado
   - Caracteres inválidos en textarea: fondo rojo
   - Caracteres no asignados (sobran): fondo amarillo
-- Deshabilitar botón "Guardar" si hay desbalance o errores
+- [ ] Deshabilitar botón "Guardar" si hay desbalance o errores
 
 ### Fase 5: Navegación y Lista de Imágenes
-- Implementar lista de imágenes en sidebar izquierdo
-- Mostrar estado visual (done ✓ verde / pending ○ gris)
-- Implementar filtrado por estado (Todas / Completadas / Pendientes)
-- Implementar búsqueda por nombre de archivo
-- Implementar navegación con flechas del teclado (↑/↓)
-- Cargar imagen seleccionada en el canvas
+- [ ] Implementar lista de imágenes en sidebar izquierdo
+- [ ] Mostrar estado visual (done ✓ verde / pending ○ gris)
+- [ ] Implementar filtrado por estado (Todas / Completadas / Pendientes)
+- [ ] Implementar búsqueda por nombre de archivo
+- [ ] Implementar navegación con flechas del teclado (↑/↓)
+- [ ] Cargar imagen seleccionada en el canvas
 
 ### Fase 6: Persistencia (YOLO + JSON)
-- Generar `classes.txt` automáticamente al iniciar (70 clases)
-- Crear endpoint `POST /api/save`:
+- [ ] Generar `classes.txt` automáticamente al iniciar (70 clases)
+- [ ] Crear endpoint `POST /api/save`:
   - Convertir píxeles → coordenadas normalizadas (0-1)
   - Guardar archivo `.txt` en formato YOLO (clase x y w h)
   - Guardar archivo `.json` con metadata completa
-- Crear endpoint `GET /api/annotations/{filename}`:
+- [ ] Crear endpoint `GET /api/annotations/{filename}`:
   - Retornar metadata JSON si existe
   - Retornar null/404 si no hay anotación previa
-- Implementar carga de anotaciones previas al seleccionar imagen
-- Actualizar estado de imagen a 'done' al guardar exitosamente
+- [ ] Implementar carga de anotaciones previas al seleccionar imagen
+- [ ] Actualizar estado de imagen a 'done' al guardar exitosamente
 
 ### Fase 7: Flujo Completo y Polish
-- Implementar botón "Completar" (guarda + marca done + siguiente pendiente)
-- Implementar botón "Dejar Pendiente" (siguiente sin marcar)
-- Implementar atajo Shift+Enter (equivalente a "Completar")
-- Validación exhaustiva con Zod (frontend) y Pydantic (backend)
-- Manejo de errores: toast/notificaciones para éxito/error
-- Estados de carga (spinners) durante operaciones async
-- Optimización de performance (memo, useMemo, useCallback donde sea necesario)
+- [ ] Implementar botón "Completar" (guarda + marca done + siguiente pendiente)
+- [ ] Implementar botón "Dejar Pendiente" (siguiente sin marcar)
+- [ ] Implementar atajo Shift+Enter (equivalente a "Completar")
+- [ ] Validación exhaustiva con Zod (frontend) y Pydantic (backend)
+- [ ] Manejo de errores: toast/notificaciones para éxito/error
+- [ ] Estados de carga (spinners) durante operaciones async
+- [ ] Optimización de performance (memo, useMemo, useCallback donde sea necesario)
 
 ---
 
