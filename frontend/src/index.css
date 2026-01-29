@@ -4,7 +4,7 @@
 
 /* ============================================
    KEPOSHKA LABELER - DRAAG REGIME AESTHETICS
-   Brutalista / Propaganda Soviética / Distopía
+   Brutalista / Distopía / The Black Parade
    ============================================ */
 
 :root {
@@ -64,7 +64,7 @@ body {
 
 /* Custom utility classes */
 @layer utilities {
-  /* Propaganda stamp effect */
+  /* Regime stamp effect */
   .stamp {
     @apply relative;
   }
@@ -124,7 +124,7 @@ body {
     mix-blend-mode: overlay;
   }
 
-  /* Propaganda text styling */
+  /* Regime text styling */
   .text-propaganda {
     @apply font-display uppercase tracking-[0.15em];
     text-shadow: 2px 2px 0 var(--keposhka-black);

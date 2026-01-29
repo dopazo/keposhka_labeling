@@ -1,6 +1,6 @@
 /**
  * Reference Panel Component - DRAAG REGIME EDITION
- * Soviet Brutalist aesthetic - Shows Keposhka alphabet reference
+ * Brutalist aesthetic - Shows Keposhka alphabet reference
  */
 
 import { KEPOSHKA_ALPHABET, DIGRAPHS } from '@/lib/validator';
@@ -18,7 +18,7 @@ export function ReferencePanel() {
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-keposhka-black flex items-center justify-center border border-keposhka-cream/20">
-              <span className="font-display text-keposhka-cream text-sm">АБ</span>
+              <span className="font-display text-keposhka-cream text-sm">Aa</span>
             </div>
             <div>
               <h2 className="text-lg tracking-[0.2em] leading-none">REFERENCIA</h2>
@@ -101,7 +101,7 @@ export function ReferencePanel() {
             })}
           </div>
           <p className="mt-2 text-[10px] font-mono text-keposhka-steel uppercase">
-            ★ Clic derecho en caja → marcar como dígrafo
+            ◆ Clic derecho en caja → marcar como dígrafo
           </p>
         </section>
 
@@ -178,7 +178,7 @@ export function ReferencePanel() {
             CLASIFICACIÓN: PÚBLICO
           </span>
           <span className="text-keposhka-red flex items-center gap-1">
-            <span>★</span>
+            <span className="font-display">◆</span>
             DRAAG CULTURAL DEPT.
           </span>
         </div>

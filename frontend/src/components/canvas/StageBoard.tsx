@@ -1,6 +1,6 @@
 /**
  * StageBoard - Main Canvas Component - DRAAG REGIME EDITION
- * Soviet Brutalist aesthetic for the main labeling canvas
+ * Brutalist aesthetic for the main labeling canvas
  *
  * Features:
  * - Image loading with auto-fit
@@ -300,10 +300,10 @@ export function StageBoard() {
         />
 
         <div className="text-center relative z-10">
-          {/* Propaganda-style icon */}
+          {/* Regime emblem */}
           <div className="mb-6 relative">
             <div className="w-24 h-24 mx-auto border-4 border-keposhka-red bg-keposhka-black/50 flex items-center justify-center">
-              <span className="text-5xl text-keposhka-red">★</span>
+              <span className="text-5xl text-keposhka-red font-display">K</span>
             </div>
             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-keposhka-red px-3 py-1">
               <span className="text-[10px] font-mono text-keposhka-white uppercase tracking-wider">
@@ -521,7 +521,7 @@ export function StageBoard() {
       {/* Top-left file indicator */}
       <div className="absolute top-4 left-4 pointer-events-none">
         <div className="bg-keposhka-black/90 border-2 border-keposhka-red px-3 py-1.5 flex items-center gap-2">
-          <span className="text-keposhka-red">★</span>
+          <span className="text-keposhka-red font-display">◆</span>
           <span className="text-xs font-mono text-keposhka-cream uppercase tracking-wider">
             {currentImage.filename}
           </span>

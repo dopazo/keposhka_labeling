@@ -1,6 +1,6 @@
 /**
  * Editor Panel Component - DRAAG REGIME EDITION
- * Soviet Brutalist aesthetic with propaganda styling
+ * Brutalist aesthetic with regime styling
  * Left sidebar with file list and text input
  */
 
@@ -251,9 +251,9 @@ export function EditorPanel() {
       {/* REGIME HEADER */}
       <div className="panel-header relative overflow-hidden">
         <div className="relative z-10 flex items-center gap-3">
-          {/* Propaganda star */}
+          {/* Regime emblem */}
           <div className="w-8 h-8 bg-keposhka-black flex items-center justify-center">
-            <span className="text-keposhka-red text-lg">★</span>
+            <span className="text-keposhka-red text-lg font-display">K</span>
           </div>
           <div>
             <h1 className="text-xl tracking-[0.25em] leading-none">KEPOSHKA</h1>
@@ -460,7 +460,7 @@ export function EditorPanel() {
         </div>
       </div>
 
-      {/* ACTION BUTTONS - Propaganda style */}
+      {/* ACTION BUTTONS - Regime style */}
       <div className="p-3 border-t-2 border-keposhka-steel bg-keposhka-black space-y-2">
         {/* Save Result Feedback */}
         {lastSaveResult && (
@@ -500,7 +500,7 @@ export function EditorPanel() {
             </>
           ) : (
             <>
-              <span className="text-2xl">★</span>
+              <span className="text-2xl font-display">▸</span>
               <span>COMPLETAR</span>
               <span className="text-xs font-mono text-keposhka-cream/50">[SHIFT+ENTER]</span>
             </>

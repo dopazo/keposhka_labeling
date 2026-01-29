@@ -64,10 +64,10 @@ export const BoxContextMenu = memo(function BoxContextMenu({
         bg-keposhka-black border-2 border-keposhka-red
         shadow-brutal
       ">
-        {/* Header - Propaganda style */}
+        {/* Header - Regime style */}
         <div className="px-3 py-2 bg-keposhka-red border-b-2 border-keposhka-black">
           <div className="flex items-center gap-2">
-            <span className="text-keposhka-white">★</span>
+            <span className="text-keposhka-white font-display">◆</span>
             <span className="text-xs font-display uppercase tracking-[0.15em] text-keposhka-white">
               CLASIFICACIÓN DE SECTOR
             </span>
