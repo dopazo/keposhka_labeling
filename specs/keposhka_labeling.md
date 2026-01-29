@@ -587,12 +587,12 @@ export default defineConfig({
 - [x] Deshabilitar botón "Guardar" si hay desbalance o errores
 
 ### Fase 5: Navegación y Lista de Imágenes
-- [ ] Implementar lista de imágenes en sidebar izquierdo
-- [ ] Mostrar estado visual (done ✓ verde / pending ○ gris)
-- [ ] Implementar filtrado por estado (Todas / Completadas / Pendientes)
-- [ ] Implementar búsqueda por nombre de archivo
-- [ ] Implementar navegación con flechas del teclado (↑/↓)
-- [ ] Cargar imagen seleccionada en el canvas
+- [x] Implementar lista de imágenes en sidebar izquierdo
+- [x] Mostrar estado visual (done ✓ verde / pending ○ gris)
+- [x] Implementar filtrado por estado (Todas / Completadas / Pendientes)
+- [x] Implementar búsqueda por nombre de archivo
+- [x] Implementar navegación con flechas del teclado (↑/↓)
+- [x] Cargar imagen seleccionada en el canvas
 
 ### Fase 6: Persistencia (YOLO + JSON)
 - [ ] Generar `classes.txt` automáticamente al iniciar (70 clases)
