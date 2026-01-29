@@ -44,7 +44,7 @@ export function isValidChar(char: string): boolean {
  * Check if a string is a digraph
  */
 export function isDigraph(str: string): boolean {
-  return DIGRAPHS.includes(str as any);
+  return (DIGRAPHS as readonly string[]).includes(str);
 }
 
 /**

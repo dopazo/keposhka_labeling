@@ -554,14 +554,14 @@ export default defineConfig({
 - [x] Crear store de Zustand con estado inicial (boxes, currentImage, inputText)
 
 ### Fase 2: Canvas Interactivo
-- [ ] Implementar carga de imagen en Konva (UrlImage)
-- [ ] Implementar auto-fit de imagen al viewport (escalar para que quepa)
-- [ ] Implementar dibujo de rectángulos (mouseDown → mouseMove → mouseUp)
-- [ ] Implementar selección de cajas (clic para seleccionar)
-- [ ] Implementar BoxTransformer para redimensionar/mover cajas
-- [ ] Implementar eliminación de cajas (Delete/Backspace)
-- [ ] Implementar deselección (Esc)
-- [ ] Feedback visual básico: borde de caja seleccionada
+- [x] Implementar carga de imagen en Konva (UrlImage)
+- [x] Implementar auto-fit de imagen al viewport (escalar para que quepa)
+- [x] Implementar dibujo de rectángulos (mouseDown → mouseMove → mouseUp)
+- [x] Implementar selección de cajas (clic para seleccionar)
+- [x] Implementar BoxTransformer para redimensionar/mover cajas
+- [x] Implementar eliminación de cajas (Delete/Backspace)
+- [x] Implementar deselección (Esc)
+- [x] Feedback visual básico: borde de caja seleccionada
 
 ### Fase 3: Algoritmo de Ordenamiento y Validación
 - [ ] Desarrollar `validator.ts`:
