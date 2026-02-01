@@ -50,7 +50,6 @@ export const BoxContextMenu = memo(function BoxContextMenu({
   const options = [
     { value: 1, label: '1 CARÁCTER', description: 'LETRA SIMPLE', code: 'A, b, 5...' },
     { value: 2, label: '2 CARACTERES', description: 'DÍGRAFO', code: 'CH, sh, TH...' },
-    { value: 3, label: '3 CARACTERES', description: 'TRÍGRAFO', code: 'RARO' },
   ];
 
   return (
