@@ -126,6 +126,10 @@ export function StageBoard() {
 
   const generateId = () => crypto.randomUUID();
 
+  // Calculate the Group offset for coordinate transformation
+  const groupOffsetX = (containerSize.width - imageSize.width) / 2;
+  const groupOffsetY = (containerSize.height - imageSize.height) / 2;
+
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const clickedOnEmpty = e.target === e.target.getStage() || e.target.name() === 'background-image';
     if (!clickedOnEmpty) return;
@@ -135,14 +139,19 @@ export function StageBoard() {
     if (!stage) return;
     const pos = stage.getPointerPosition();
     if (!pos) return;
-    if (pos.x < 0 || pos.y < 0 || pos.x > imageSize.width || pos.y > imageSize.height) return;
+
+    // Adjust coordinates to be relative to the centered Group
+    const adjustedX = pos.x - groupOffsetX;
+    const adjustedY = pos.y - groupOffsetY;
+
+    if (adjustedX < 0 || adjustedY < 0 || adjustedX > imageSize.width || adjustedY > imageSize.height) return;
 
     setDrawing({
       isDrawing: true,
-      startX: pos.x,
-      startY: pos.y,
-      currentX: pos.x,
-      currentY: pos.y,
+      startX: adjustedX,
+      startY: adjustedY,
+      currentX: adjustedX,
+      currentY: adjustedY,
     });
   };
 
@@ -153,8 +162,12 @@ export function StageBoard() {
     const pos = stage.getPointerPosition();
     if (!pos) return;
 
-    const clampedX = Math.max(0, Math.min(pos.x, imageSize.width));
-    const clampedY = Math.max(0, Math.min(pos.y, imageSize.height));
+    // Adjust coordinates to be relative to the centered Group
+    const adjustedX = pos.x - groupOffsetX;
+    const adjustedY = pos.y - groupOffsetY;
+
+    const clampedX = Math.max(0, Math.min(adjustedX, imageSize.width));
+    const clampedY = Math.max(0, Math.min(adjustedY, imageSize.height));
 
     setDrawing((prev) => ({
       ...prev,
