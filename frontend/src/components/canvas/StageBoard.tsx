@@ -71,6 +71,7 @@ export function StageBoard() {
     boxId: null,
   });
   const [lastBoxSize, setLastBoxSize] = useState<LastBoxSize | null>(null);
+  const [nodeUpdateTrigger, setNodeUpdateTrigger] = useState(0);
 
   const currentImage = useStore((s) => s.currentImage);
   const boxes = useStore((s) => s.boxes);
@@ -87,7 +88,7 @@ export function StageBoard() {
     if (!selectedBoxId) return null;
     return boxRefs.current.get(selectedBoxId) || null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedBoxId, boxes.length]);
+  }, [selectedBoxId, boxes.length, nodeUpdateTrigger]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -210,6 +211,8 @@ export function StageBoard() {
         setSelectedBoxId(newBox.id);
         // Save dimensions for quick-click
         setLastBoxSize({ width, height });
+        // Force re-evaluation of selectedNode after ref is registered
+        requestAnimationFrame(() => setNodeUpdateTrigger((n) => n + 1));
       }
     } else if (lastBoxSize) {
       // Quick click: create box with last dimensions, centered on click point
@@ -235,6 +238,8 @@ export function StageBoard() {
       };
       addBox(newBox);
       setSelectedBoxId(newBox.id);
+      // Force re-evaluation of selectedNode after ref is registered
+      requestAnimationFrame(() => setNodeUpdateTrigger((n) => n + 1));
     }
 
     setDrawing({
