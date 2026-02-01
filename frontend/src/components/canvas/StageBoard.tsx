@@ -34,6 +34,11 @@ interface DrawingState {
   currentY: number;
 }
 
+interface LastBoxSize {
+  width: number;
+  height: number;
+}
+
 // Keposhka regime colors
 const COLORS = {
   red: '#89181A',
@@ -65,6 +70,7 @@ export function StageBoard() {
     y: 0,
     boxId: null,
   });
+  const [lastBoxSize, setLastBoxSize] = useState<LastBoxSize | null>(null);
 
   const currentImage = useStore((s) => s.currentImage);
   const boxes = useStore((s) => s.boxes);
@@ -179,18 +185,51 @@ export function StageBoard() {
   const handleMouseUp = () => {
     if (!drawing.isDrawing) return;
 
-    const x = Math.min(drawing.startX, drawing.currentX);
-    const y = Math.min(drawing.startY, drawing.currentY);
-    const width = Math.abs(drawing.currentX - drawing.startX);
-    const height = Math.abs(drawing.currentY - drawing.startY);
+    const dragWidth = Math.abs(drawing.currentX - drawing.startX);
+    const dragHeight = Math.abs(drawing.currentY - drawing.startY);
+    const isDrag = dragWidth > 5 || dragHeight > 5;
 
-    if (width > 5 && height > 5) {
+    if (isDrag) {
+      // Normal drag: create box from drag coordinates
+      const x = Math.min(drawing.startX, drawing.currentX);
+      const y = Math.min(drawing.startY, drawing.currentY);
+      const width = Math.abs(drawing.currentX - drawing.startX);
+      const height = Math.abs(drawing.currentY - drawing.startY);
+
+      if (width > 5 && height > 5) {
+        const newBox = {
+          id: generateId(),
+          x,
+          y,
+          width,
+          height,
+          charCount: 1,
+          isNew: true,
+        };
+        addBox(newBox);
+        setSelectedBoxId(newBox.id);
+        // Save dimensions for quick-click
+        setLastBoxSize({ width, height });
+      }
+    } else if (lastBoxSize) {
+      // Quick click: create box with last dimensions, centered on click point
+      const clickX = drawing.startX;
+      const clickY = drawing.startY;
+
+      // Center the box on the click point
+      let x = clickX - lastBoxSize.width / 2;
+      let y = clickY - lastBoxSize.height / 2;
+
+      // Clamp to image bounds
+      x = Math.max(0, Math.min(x, imageSize.width - lastBoxSize.width));
+      y = Math.max(0, Math.min(y, imageSize.height - lastBoxSize.height));
+
       const newBox = {
         id: generateId(),
         x,
         y,
-        width,
-        height,
+        width: lastBoxSize.width,
+        height: lastBoxSize.height,
         charCount: 1,
         isNew: true,
       };
@@ -495,6 +534,12 @@ export function StageBoard() {
               DRAG
             </kbd>
             Dibujar
+          </span>
+          <span className={`text-[11px] font-mono uppercase ${lastBoxSize ? 'text-keposhka-cream' : 'text-keposhka-steel'}`}>
+            <kbd className={`px-1.5 py-0.5 bg-keposhka-steel border mr-1 ${lastBoxSize ? 'border-keposhka-green text-keposhka-green' : 'border-keposhka-steel text-keposhka-steel'}`}>
+              CLICK
+            </kbd>
+            Repetir
           </span>
           <span className="text-[11px] font-mono text-keposhka-cream uppercase">
             <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">

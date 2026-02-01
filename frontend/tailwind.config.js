@@ -19,6 +19,9 @@ export default {
           steel: '#2A2A2A',
           concrete: '#1A1A1A',
           rust: '#4A1A1B',
+          // Success/active state
+          green: '#4A7C23',
+          'green-dark': '#2D5016',
         },
       },
       fontFamily: {
