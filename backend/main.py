@@ -50,7 +50,7 @@ async def startup_event():
 async def list_images():
     """
     List all images from the images directory with their metadata
-    Returns status 'done' if annotation exists, 'pending' otherwise
+    Returns status from annotation JSON if exists, 'pending' otherwise
     """
     images = []
 
@@ -61,9 +61,16 @@ async def list_images():
         if img_path.suffix.lower() not in image_extensions:
             continue
 
-        # Check if annotation exists
+        # Check if annotation exists and read status from it
         annotation_path = ANNOTATIONS_DIR / f"{img_path.stem}.json"
-        status = "done" if annotation_path.exists() else "pending"
+        status = "pending"
+        if annotation_path.exists():
+            try:
+                with open(annotation_path, 'r', encoding='utf-8') as f:
+                    metadata = json.load(f)
+                    status = metadata.get("status", "done")  # Default to done for legacy files
+            except Exception:
+                status = "done"  # If can't read, assume done (legacy)
 
         # Get image dimensions
         try:
@@ -111,25 +118,28 @@ async def get_annotation(filename: str):
 async def save_annotation(annotation: Annotation):
     """
     Save annotation in both YOLO format (.txt) and JSON metadata (.json)
+    YOLO format is only saved when status is 'done'
     """
     try:
-        # Save YOLO format
-        save_yolo_format(
-            annotation.filename,
-            annotation.boxes,
-            annotation.image_width,
-            annotation.image_height,
-            ANNOTATIONS_DIR
-        )
+        # Save YOLO format only if status is 'done'
+        if annotation.status == "done":
+            save_yolo_format(
+                annotation.filename,
+                annotation.boxes,
+                annotation.image_width,
+                annotation.image_height,
+                ANNOTATIONS_DIR
+            )
 
-        # Save JSON metadata
+        # Save JSON metadata (always, includes status)
         save_json_metadata(
             annotation.filename,
             annotation.translated_text,
             annotation.boxes,
             annotation.image_width,
             annotation.image_height,
-            ANNOTATIONS_DIR
+            ANNOTATIONS_DIR,
+            annotation.status
         )
 
         return {"status": "success", "message": "Annotation saved successfully"}

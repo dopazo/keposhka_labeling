@@ -63,7 +63,8 @@ def save_json_metadata(
     boxes: List[Box],
     image_width: int,
     image_height: int,
-    output_dir: Path
+    output_dir: Path,
+    status: str = "done"
 ) -> None:
     """
     Save full metadata in JSON format for re-editing
@@ -75,6 +76,7 @@ def save_json_metadata(
         "translatedText": translated_text,
         "imageWidth": image_width,
         "imageHeight": image_height,
+        "status": status,
         "boxes": [
             {
                 "id": box.id,

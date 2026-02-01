@@ -134,6 +134,7 @@ export function EditorPanel() {
     isSaving,
     lastSaveResult,
     saveAnnotation,
+    saveDraft,
     skipToNextPending,
     clearSaveResult,
   } = useStore();
@@ -206,9 +207,19 @@ export function EditorPanel() {
     if (canSave && !isSaving) saveAnnotation();
   }, [canSave, isSaving, saveAnnotation]);
 
-  const handleSkip = useCallback(() => {
-    skipToNextPending();
-  }, [skipToNextPending]);
+  const canSaveDraft = useMemo(() => {
+    if (!currentImage) return false;
+    return boxes.length > 0 || inputText.trim() !== '';
+  }, [currentImage, boxes.length, inputText]);
+
+  const handleSkip = useCallback(async () => {
+    // Save as draft if there's content to save
+    if (canSaveDraft && !isSaving) {
+      await saveDraft();
+    } else {
+      skipToNextPending();
+    }
+  }, [canSaveDraft, isSaving, saveDraft, skipToNextPending]);
 
   const handleImageSelect = (image: (typeof images)[0]) => {
     selectImage(image);
@@ -500,18 +511,20 @@ export function EditorPanel() {
           )}
         </button>
 
-        {/* Skip button - Secondary */}
+        {/* Skip/Save Draft button - Secondary */}
         <button
           onClick={handleSkip}
+          disabled={isSaving}
           className="
             w-full px-4 py-2 font-heading text-sm uppercase tracking-wider
             bg-keposhka-black text-keposhka-cream
             border-2 border-keposhka-steel
             hover:border-keposhka-red hover:text-keposhka-red
             transition-colors duration-100
+            disabled:opacity-50 disabled:cursor-not-allowed
           "
         >
-          OMITIR → SIGUIENTE PENDIENTE
+          {canSaveDraft ? 'GUARDAR PENDIENTE → SIGUIENTE' : 'OMITIR → SIGUIENTE PENDIENTE'}
         </button>
       </div>
     </div>

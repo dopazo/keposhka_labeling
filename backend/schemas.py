@@ -22,6 +22,7 @@ class Annotation(BaseModel):
     image_height: int
     translated_text: str
     boxes: list[Box]
+    status: str = "done"  # 'pending' or 'done'
 
 
 class ImageInfo(BaseModel):

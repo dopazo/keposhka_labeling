@@ -7,7 +7,7 @@ import { create } from 'zustand';
 import type { BoundingBox, ImageMeta, AnnotationMetadata } from '@/lib/types';
 import { assignLabels } from '@/lib/sorter';
 import { validateInput } from '@/lib/validator';
-import { validateSavePayload } from '@/lib/schemas';
+import { validateSavePayload, validateDraftPayload } from '@/lib/schemas';
 
 export type FilterStatus = 'all' | 'done' | 'pending';
 
@@ -66,6 +66,7 @@ interface AppState {
 
   // Phase 6: Save Actions
   saveAnnotation: () => Promise<SaveResult>;
+  saveDraft: () => Promise<SaveResult>;
   skipToNextPending: () => void;
   clearSaveResult: () => void;
 
@@ -356,6 +357,7 @@ export const useStore = create<AppState>((set, get) => ({
         w: box.width,
         h: box.height,
       })),
+      status: 'done' as const,
     };
 
     // Phase 7: Validate payload with Zod
@@ -395,6 +397,93 @@ export const useStore = create<AppState>((set, get) => ({
         get().skipToNextPending();
 
         return { success: true, message: 'Guardado exitosamente' };
+      } else {
+        const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
+        const result = { success: false, message: errorData.detail || 'Error al guardar' };
+        set({ isSaving: false, lastSaveResult: result });
+        return result;
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error de conexión';
+      const result = { success: false, message: errorMessage };
+      set({ isSaving: false, lastSaveResult: result });
+      return result;
+    }
+  },
+
+  saveDraft: async () => {
+    const state = get();
+
+    // Validate we have an image
+    if (!state.currentImage) {
+      const result = { success: false, message: 'No hay imagen seleccionada' };
+      set({ lastSaveResult: result });
+      return result;
+    }
+
+    // For drafts, we allow empty boxes and unbalanced state
+    // Just need something to save (text or boxes)
+    if (state.boxes.length === 0 && state.inputText.trim() === '') {
+      const result = { success: false, message: 'No hay nada que guardar' };
+      set({ lastSaveResult: result });
+      return result;
+    }
+
+    // Prepare payload for backend
+    const payload = {
+      filename: state.currentImage.filename,
+      image_width: state.currentImage.width,
+      image_height: state.currentImage.height,
+      translated_text: state.inputText,
+      boxes: state.boxes.map((box) => ({
+        id: box.id,
+        label: box.label || '',
+        char_count: box.charCount,
+        x: box.x,
+        y: box.y,
+        w: box.width,
+        h: box.height,
+      })),
+      status: 'pending' as const,
+    };
+
+    // Validate payload with Zod (draft schema)
+    const validation = validateDraftPayload(payload);
+    if (!validation.success) {
+      const result = { success: false, message: `Error de validación: ${validation.error}` };
+      set({ lastSaveResult: result });
+      return result;
+    }
+
+    set({ isSaving: true, lastSaveResult: null });
+
+    try {
+      const response = await fetch('/api/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        // Keep image status as 'pending'
+        const currentFilename = state.currentImage.filename;
+        set((state) => ({
+          images: state.images.map((img) =>
+            img.filename === currentFilename ? { ...img, status: 'pending' as const } : img
+          ),
+          currentImage: state.currentImage
+            ? { ...state.currentImage, status: 'pending' as const }
+            : null,
+          isSaving: false,
+          lastSaveResult: { success: true, message: 'Borrador guardado' },
+        }));
+
+        // Navigate to next pending image
+        get().skipToNextPending();
+
+        return { success: true, message: 'Borrador guardado' };
       } else {
         const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
         const result = { success: false, message: errorData.detail || 'Error al guardar' };
