@@ -295,12 +295,18 @@ export function StageBoard() {
     node.scaleX(1);
     node.scaleY(1);
 
+    const newWidth = Math.max(10, node.width() * scaleX);
+    const newHeight = Math.max(10, node.height() * scaleY);
+
     updateBox(boxId, {
       x: node.x(),
       y: node.y(),
-      width: Math.max(10, node.width() * scaleX),
-      height: Math.max(10, node.height() * scaleY),
+      width: newWidth,
+      height: newHeight,
     });
+
+    // Update lastBoxSize so quick-click uses the edited dimensions
+    setLastBoxSize({ width: newWidth, height: newHeight });
   };
 
   const getPreviewBox = () => {
