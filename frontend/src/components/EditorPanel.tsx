@@ -49,7 +49,7 @@ const HighlightedText = memo(function HighlightedText({
           return (
             <span
               key={i}
-              className="bg-keposhka-red/80 text-keposhka-white border-b-2 border-keposhka-white"
+              className="bg-keposhka-red text-white border-b-2 border-white"
             >
               {segment.char}
             </span>
@@ -59,14 +59,14 @@ const HighlightedText = memo(function HighlightedText({
           return (
             <span
               key={i}
-              className="bg-amber-600/60 text-amber-100"
+              className="bg-amber-500 text-white"
             >
               {segment.char}
             </span>
           );
         }
         return (
-          <span key={i} className="text-transparent">
+          <span key={i} className="text-white">
             {segment.char}
           </span>
         );
@@ -99,12 +99,12 @@ const FilterButton = memo(function FilterButton({
         ${
           isActive
             ? 'bg-keposhka-red text-keposhka-white border-keposhka-red shadow-brutal-sm'
-            : 'bg-keposhka-black text-keposhka-cream border-keposhka-steel hover:border-keposhka-red'
+            : 'bg-keposhka-black text-keposhka-cream border-keposhka-cream/40 hover:border-keposhka-red'
         }
       `}
     >
       {label}
-      <span className={`ml-1 font-mono ${isActive ? 'text-keposhka-cream/70' : 'text-keposhka-steel'}`}>
+      <span className={`ml-1 font-mono ${isActive ? 'text-keposhka-cream/70' : 'text-keposhka-cream/60'}`}>
         [{count}]
       </span>
     </button>
@@ -274,14 +274,14 @@ export function EditorPanel() {
       {/* ARCHIVO SECTION */}
       <div className="flex-1 overflow-hidden flex flex-col min-h-0">
         {/* Search & Filter - Industrial Control Panel */}
-        <div className="p-3 border-b-2 border-keposhka-steel bg-keposhka-black/50 space-y-3">
+        <div className="p-3 border-b-2 border-keposhka-cream/20 bg-keposhka-black/50 space-y-3">
           {/* Section label */}
           <div className="flex items-center gap-2">
-            <div className="h-px flex-1 bg-keposhka-steel" />
-            <span className="text-[10px] font-heading uppercase tracking-[0.2em] text-keposhka-steel">
+            <div className="h-px flex-1 bg-keposhka-cream/30" />
+            <span className="text-[10px] font-heading uppercase tracking-[0.2em] text-keposhka-cream/80">
               ARCHIVOS DE IMAGEN
             </span>
-            <div className="h-px flex-1 bg-keposhka-steel" />
+            <div className="h-px flex-1 bg-keposhka-cream/30" />
           </div>
 
           {/* Search Input - Brutal style */}
@@ -295,8 +295,8 @@ export function EditorPanel() {
               className="
                 w-full pl-8 pr-8 py-2 text-sm font-mono uppercase
                 bg-keposhka-black text-keposhka-cream
-                border-2 border-keposhka-steel
-                placeholder:text-keposhka-steel/50
+                border-2 border-keposhka-cream/30
+                placeholder:text-keposhka-cream/40
                 focus:outline-none focus:border-keposhka-red
                 transition-colors duration-100
               "
@@ -312,7 +312,7 @@ export function EditorPanel() {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-keposhka-steel hover:text-keposhka-red"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-keposhka-cream/70 hover:text-keposhka-red"
               >
                 <span className="font-mono text-xs">×</span>
               </button>
@@ -332,13 +332,13 @@ export function EditorPanel() {
           {isLoadingAnnotation && (
             <div className="flex items-center justify-center py-4 gap-2">
               <div className="w-3 h-3 border-2 border-keposhka-red border-t-transparent animate-spin" />
-              <span className="text-xs font-mono text-keposhka-steel uppercase">Cargando datos...</span>
+              <span className="text-xs font-mono text-keposhka-cream/80 uppercase">Cargando datos...</span>
             </div>
           )}
           {filteredImages.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-4xl text-keposhka-steel/30 mb-2">∅</div>
-              <span className="text-xs font-mono text-keposhka-steel uppercase">
+              <div className="text-4xl text-keposhka-cream/30 mb-2">∅</div>
+              <span className="text-xs font-mono text-keposhka-cream/60 uppercase">
                 {images.length === 0 ? 'SIN ARCHIVOS' : 'SIN RESULTADOS'}
               </span>
             </div>
@@ -365,7 +365,7 @@ export function EditorPanel() {
                     `}
                   >
                     {/* Index number */}
-                    <span className={`text-[10px] w-6 ${isActive ? 'text-keposhka-cream/50' : 'text-keposhka-steel'}`}>
+                    <span className={`text-[10px] w-6 ${isActive ? 'text-keposhka-cream/50' : 'text-keposhka-cream/40'}`}>
                       {String(index + 1).padStart(3, '0')}
                     </span>
                     {/* Filename */}
@@ -373,7 +373,7 @@ export function EditorPanel() {
                       {image.filename}
                     </span>
                     {/* Status indicator */}
-                    <span className={`text-sm font-bold ${isActive ? 'text-keposhka-white' : isDone ? 'text-green-500' : 'text-keposhka-steel/50'}`}>
+                    <span className={`text-sm font-bold ${isActive ? 'text-keposhka-white' : isDone ? 'text-green-500' : 'text-keposhka-cream/40'}`}>
                       {isDone ? '✓' : '○'}
                     </span>
                   </button>
@@ -384,10 +384,10 @@ export function EditorPanel() {
         </div>
 
         {/* Navigation hint - industrial */}
-        <div className="px-3 py-2 border-t-2 border-keposhka-steel bg-keposhka-black/50">
-          <p className="text-[10px] text-keposhka-steel text-center font-mono">
-            <kbd className="px-1.5 py-0.5 bg-keposhka-steel/30 border border-keposhka-steel text-keposhka-cream">↑</kbd>
-            <kbd className="px-1.5 py-0.5 bg-keposhka-steel/30 border border-keposhka-steel text-keposhka-cream ml-1">↓</kbd>
+        <div className="px-3 py-2 border-t-2 border-keposhka-cream/20 bg-keposhka-black/50">
+          <p className="text-[10px] text-keposhka-cream/70 text-center font-mono">
+            <kbd className="px-1.5 py-0.5 bg-keposhka-cream/10 border border-keposhka-cream/40 text-keposhka-cream">↑</kbd>
+            <kbd className="px-1.5 py-0.5 bg-keposhka-cream/10 border border-keposhka-cream/40 text-keposhka-cream ml-1">↓</kbd>
             <span className="ml-2 uppercase">Navegar</span>
           </p>
         </div>
@@ -402,10 +402,10 @@ export function EditorPanel() {
           </span>
           {/* Character count */}
           <div className="flex items-center gap-2 text-[10px] font-mono">
-            <span className="px-2 py-0.5 bg-keposhka-black border border-keposhka-steel text-keposhka-cream">
+            <span className="px-2 py-0.5 bg-keposhka-black border border-keposhka-cream/40 text-keposhka-cream">
               TXT:{validation.textCharCount}
             </span>
-            <span className="px-2 py-0.5 bg-keposhka-black border border-keposhka-steel text-keposhka-cream">
+            <span className="px-2 py-0.5 bg-keposhka-black border border-keposhka-cream/40 text-keposhka-cream">
               BOX:{validation.boxCharCount}
             </span>
           </div>
@@ -426,11 +426,11 @@ export function EditorPanel() {
               placeholder="INGRESE TEXTO TRADUCIDO..."
               className="
                 w-full h-28 px-3 py-2 text-sm font-mono
-                bg-keposhka-black/50 text-keposhka-cream
-                border-2 border-keposhka-steel
+                bg-transparent text-transparent caret-keposhka-red
+                border-2 border-keposhka-cream/30
                 focus:outline-none focus:border-keposhka-red
                 resize-none relative z-10
-                placeholder:text-keposhka-steel/50 placeholder:uppercase
+                placeholder:text-keposhka-cream/40 placeholder:uppercase
               "
               spellCheck={false}
             />
@@ -438,7 +438,7 @@ export function EditorPanel() {
 
           {/* Status and help */}
           <div className="mt-2 flex items-center justify-between">
-            <span className="text-[10px] text-keposhka-steel font-mono uppercase">
+            <span className="text-[10px] text-keposhka-cream/60 font-mono uppercase">
               Enter = Nueva Línea
             </span>
             <span className={`text-xs font-heading uppercase tracking-wider flex items-center gap-1 ${statusMessage.color}`}>
@@ -450,23 +450,23 @@ export function EditorPanel() {
           {/* Legend */}
           <div className="mt-3 flex items-center gap-4 text-[10px] font-mono uppercase">
             <span className="flex items-center gap-1">
-              <span className="w-3 h-3 bg-keposhka-red/80 border border-keposhka-red"></span>
-              <span className="text-keposhka-steel">Prohibido</span>
+              <span className="w-3 h-3 bg-keposhka-red border border-keposhka-red"></span>
+              <span className="text-keposhka-cream/70">Prohibido</span>
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-3 h-3 bg-amber-600/60 border border-amber-600"></span>
-              <span className="text-keposhka-steel">Excedente</span>
+              <span className="w-3 h-3 bg-amber-500 border border-amber-500"></span>
+              <span className="text-keposhka-cream/70">Excedente</span>
             </span>
             <span className="flex items-center gap-1">
               <span className="w-3 h-3 bg-green-600/60 border border-green-600"></span>
-              <span className="text-keposhka-steel">Asignado</span>
+              <span className="text-keposhka-cream/70">Asignado</span>
             </span>
           </div>
         </div>
       </div>
 
       {/* ACTION BUTTONS - Regime style */}
-      <div className="p-3 border-t-2 border-keposhka-steel bg-keposhka-black space-y-2">
+      <div className="p-3 border-t-2 border-keposhka-cream/20 bg-keposhka-black space-y-2">
         {/* Save Result Feedback */}
         {lastSaveResult && (
           <div
@@ -518,7 +518,7 @@ export function EditorPanel() {
           className="
             w-full px-4 py-2 font-heading text-sm uppercase tracking-wider
             bg-keposhka-black text-keposhka-cream
-            border-2 border-keposhka-steel
+            border-2 border-keposhka-cream/40
             hover:border-keposhka-red hover:text-keposhka-red
             transition-colors duration-100
             disabled:opacity-50 disabled:cursor-not-allowed
