@@ -595,7 +595,7 @@ export function StageBoard() {
                       width={box.width}
                       height={box.height}
                       stroke={hasLabel ? COLORS.greenLight : COLORS.red}
-                      strokeWidth={isSelected ? 3 : 2}
+                      strokeWidth={isSelected ? 2 : 1}
                       dash={hasLabel ? undefined : [6, 4]}
                       fill={isSelected ? 'rgba(137, 24, 26, 0.2)' : 'rgba(245, 240, 230, 0.05)'}
                       cornerRadius={0}
