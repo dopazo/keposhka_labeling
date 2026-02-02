@@ -4,7 +4,7 @@
  * Left sidebar with file list and text input
  */
 
-import { memo, useRef, useCallback, useMemo, useEffect } from 'react';
+import { memo, useRef, useCallback, useMemo, useEffect, useState } from 'react';
 import { useStore, type FilterStatus } from '@/store/useStore';
 
 /**
@@ -16,10 +16,12 @@ const HighlightedText = memo(function HighlightedText({
   text,
   invalidIndices,
   unassignedIndices,
+  scrollTop,
 }: {
   text: string;
   invalidIndices: number[];
   unassignedIndices: number[];
+  scrollTop: number;
 }) {
   const invalidSet = useMemo(() => new Set(invalidIndices), [invalidIndices]);
   const unassignedSet = useMemo(() => new Set(unassignedIndices), [unassignedIndices]);
@@ -41,36 +43,41 @@ const HighlightedText = memo(function HighlightedText({
 
   return (
     <div
-      className="absolute inset-0 px-3 py-2 text-sm pointer-events-none whitespace-pre-wrap break-words font-mono"
+      className="absolute top-0 left-0 right-0 bottom-0 overflow-hidden pointer-events-none border-2 border-transparent"
       aria-hidden="true"
     >
-      {segments.map((segment, i) => {
-        if (segment.type === 'invalid') {
+      <div
+        className="px-3 py-2 text-sm whitespace-pre-wrap break-words font-mono"
+        style={{ transform: `translateY(-${scrollTop}px)` }}
+      >
+        {segments.map((segment, i) => {
+          if (segment.type === 'invalid') {
+            return (
+              <span
+                key={i}
+                className="bg-keposhka-red text-white border-b-2 border-white"
+              >
+                {segment.char}
+              </span>
+            );
+          }
+          if (segment.type === 'unassigned') {
+            return (
+              <span
+                key={i}
+                className="bg-amber-500 text-white"
+              >
+                {segment.char}
+              </span>
+            );
+          }
           return (
-            <span
-              key={i}
-              className="bg-keposhka-red text-white border-b-2 border-white"
-            >
+            <span key={i} className="text-white">
               {segment.char}
             </span>
           );
-        }
-        if (segment.type === 'unassigned') {
-          return (
-            <span
-              key={i}
-              className="bg-amber-500 text-white"
-            >
-              {segment.char}
-            </span>
-          );
-        }
-        return (
-          <span key={i} className="text-white">
-            {segment.char}
-          </span>
-        );
-      })}
+        })}
+      </div>
     </div>
   );
 });
@@ -115,6 +122,7 @@ export function EditorPanel() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const [textareaScrollTop, setTextareaScrollTop] = useState(0);
 
   const {
     inputText,
@@ -194,6 +202,11 @@ export function EditorPanel() {
         currentButton.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
     }
+    // Reset textarea scroll when changing images
+    setTextareaScrollTop(0);
+    if (textareaRef.current) {
+      textareaRef.current.scrollTop = 0;
+    }
   }, [currentImage]);
 
   useEffect(() => {
@@ -230,6 +243,13 @@ export function EditorPanel() {
       setInputText(e.target.value);
     },
     [setInputText]
+  );
+
+  const handleTextareaScroll = useCallback(
+    (e: React.UIEvent<HTMLTextAreaElement>) => {
+      setTextareaScrollTop(e.currentTarget.scrollTop);
+    },
+    []
   );
 
   const statusMessage = useMemo(() => {
@@ -418,18 +438,20 @@ export function EditorPanel() {
               text={inputText}
               invalidIndices={validation.invalidCharIndices}
               unassignedIndices={validation.unassignedTextIndices}
+              scrollTop={textareaScrollTop}
             />
             <textarea
               ref={textareaRef}
               value={inputText}
               onChange={handleTextChange}
+              onScroll={handleTextareaScroll}
               placeholder="INGRESE TEXTO TRADUCIDO..."
               className="
                 w-full h-28 px-3 py-2 text-sm font-mono
                 bg-transparent text-transparent caret-keposhka-red
                 border-2 border-keposhka-cream/30
                 focus:outline-none focus:border-keposhka-red
-                resize-none relative z-10
+                resize-none relative z-10 overflow-y-auto
                 placeholder:text-keposhka-cream/40 placeholder:uppercase
               "
               spellCheck={false}
