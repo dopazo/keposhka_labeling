@@ -4,7 +4,7 @@
  * Click on any character to add it to the translation field
  */
 
-import { KEPOSHKA_ALPHABET, DIGRAPHS } from '@/lib/validator';
+import { KEPOSHKA_ALPHABET } from '@/lib/validator';
 import { useStore } from '@/store/useStore';
 
 // Mapping of keyboard characters to Keposhka font characters

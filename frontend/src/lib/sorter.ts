@@ -5,7 +5,7 @@
  * and assigns labels based on spatial ordering (left-to-right, top-to-bottom).
  */
 import type { BoundingBox } from '@/lib/types';
-import { isDigraph, KEPOSHKA_ALPHABET } from '@/lib/validator';
+import { KEPOSHKA_ALPHABET } from '@/lib/validator';
 
 /**
  * Result of the sorting and assignment process
@@ -26,39 +26,32 @@ export interface SortResult {
 }
 
 /**
- * Parse text into tokens, respecting digraphs
- * Each token represents one character that should be assigned to a box
+ * Parse text into individual characters (excluding spaces/newlines)
+ * Does NOT auto-detect digraphs - that's determined by box charCount
  * Returns an array of { char, index } where index is the position in the original text
  */
-export function parseTextToTokens(text: string): Array<{ char: string; index: number }> {
-  const tokens: Array<{ char: string; index: number }> = [];
-  let i = 0;
+export function parseTextToChars(text: string): Array<{ char: string; index: number }> {
+  const chars: Array<{ char: string; index: number }> = [];
 
-  while (i < text.length) {
+  for (let i = 0; i < text.length; i++) {
     const char = text[i];
 
     // Skip spaces and newlines
     if (char === ' ' || char === '\n' || char === '\r') {
-      i++;
       continue;
     }
 
-    // Check for digraphs (2-char sequences)
-    if (i < text.length - 1) {
-      const twoChar = text.slice(i, i + 2);
-      if (isDigraph(twoChar)) {
-        tokens.push({ char: twoChar, index: i });
-        i += 2;
-        continue;
-      }
-    }
-
-    // Single character
-    tokens.push({ char, index: i });
-    i++;
+    chars.push({ char, index: i });
   }
 
-  return tokens;
+  return chars;
+}
+
+/**
+ * @deprecated Use parseTextToChars instead - digraphs are now determined by charCount
+ */
+export function parseTextToTokens(text: string): Array<{ char: string; index: number }> {
+  return parseTextToChars(text);
 }
 
 /**
@@ -138,17 +131,21 @@ function isValidKeposhkaChar(char: string): boolean {
 /**
  * Main sorting and assignment function
  *
+ * charCount determines how many literal characters from text each box consumes.
+ * For example: text "the" with box charCount=2 takes "th" (a valid digraph).
+ * This allows the user to control whether "th" is treated as a digraph or as separate t+h.
+ *
  * @param boxes - Array of bounding boxes with charCount
  * @param text - Translated text (may be multiline)
  * @returns SortResult with assigned labels and validation info
  */
 export function assignLabels(boxes: BoundingBox[], text: string): SortResult {
-  // Parse text into tokens
-  const tokens = parseTextToTokens(text);
+  // Parse text into individual characters (not auto-detecting digraphs)
+  const textChars = parseTextToChars(text);
 
   // Calculate total expected characters from boxes
   const boxCharCount = boxes.reduce((sum, box) => sum + box.charCount, 0);
-  const textCharCount = tokens.length;
+  const textCharCount = textChars.length;
 
   // Group and order boxes spatially
   const rows = groupBoxesIntoRows(boxes);
@@ -159,38 +156,45 @@ export function assignLabels(boxes: BoundingBox[], text: string): SortResult {
   const unassignedTextIndices: number[] = [];
   const unassignedBoxIds: string[] = [];
 
-  let tokenIndex = 0;
+  let charIndex = 0;
 
   for (const box of orderedBoxes) {
-    // Collect characters for this box based on charCount
-    const chars: string[] = [];
+    // Collect N literal characters for this box based on charCount
+    const collectedChars: string[] = [];
+    const collectedIndices: number[] = [];
 
-    for (let c = 0; c < box.charCount && tokenIndex < tokens.length; c++) {
-      const token = tokens[tokenIndex];
-
-      // Only assign if the character is valid in Keposhka alphabet
-      if (isValidKeposhkaChar(token.char)) {
-        chars.push(token.char);
-        tokenIndex++;
-      } else {
-        // Invalid character - skip and mark as unassigned
-        unassignedTextIndices.push(token.index);
-        tokenIndex++;
-        c--; // Don't count invalid characters
-      }
+    for (let c = 0; c < box.charCount && charIndex < textChars.length; c++) {
+      const textChar = textChars[charIndex];
+      collectedChars.push(textChar.char);
+      collectedIndices.push(textChar.index);
+      charIndex++;
     }
 
-    if (chars.length === box.charCount) {
-      // Successfully assigned all characters
+    // Combine collected characters into label
+    const label = collectedChars.join('');
+
+    // Validate the combined label is a valid Keposhka character
+    if (collectedChars.length === box.charCount && isValidKeposhkaChar(label)) {
+      // Successfully assigned - label is valid (single char or digraph)
       resultBoxes.push({
         ...box,
-        label: chars.join(''),
+        label,
       });
-    } else if (chars.length > 0) {
-      // Partial assignment
+    } else if (collectedChars.length === box.charCount) {
+      // Got enough chars but invalid Keposhka character
+      // Still assign for display but mark as unassigned
       resultBoxes.push({
         ...box,
-        label: chars.join(''),
+        label,
+      });
+      unassignedBoxIds.push(box.id);
+      // Mark all collected indices as unassigned
+      unassignedTextIndices.push(...collectedIndices);
+    } else if (collectedChars.length > 0) {
+      // Partial assignment - not enough characters available
+      resultBoxes.push({
+        ...box,
+        label,
       });
       unassignedBoxIds.push(box.id);
     } else {
@@ -203,17 +207,16 @@ export function assignLabels(boxes: BoundingBox[], text: string): SortResult {
     }
   }
 
-  // Mark remaining tokens as unassigned
-  while (tokenIndex < tokens.length) {
-    unassignedTextIndices.push(tokens[tokenIndex].index);
-    tokenIndex++;
+  // Mark remaining text characters as unassigned
+  while (charIndex < textChars.length) {
+    unassignedTextIndices.push(textChars[charIndex].index);
+    charIndex++;
   }
 
   // Check if assignment is balanced
-  // It's balanced when we have the right number of valid characters
-  const validTokenCount = tokens.filter((t) => isValidKeposhkaChar(t.char)).length;
+  // It's balanced when total literal chars equals box charCount sum and all labels are valid
   const isBalanced =
-    validTokenCount === boxCharCount &&
+    textCharCount === boxCharCount &&
     unassignedBoxIds.length === 0 &&
     unassignedTextIndices.length === 0;
 
