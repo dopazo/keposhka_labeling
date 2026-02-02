@@ -10,6 +10,7 @@
  * - Box deletion (Delete/Backspace keys)
  * - Deselection (Esc key or click on empty area)
  * - Right-click context menu for digraph marking
+ * - Zoom with wheel/touchpad and +/- buttons
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Stage, Layer, Rect, Group, Text } from 'react-konva';
@@ -34,10 +35,28 @@ interface DrawingState {
   currentY: number;
 }
 
+interface PanState {
+  isPanning: boolean;
+  startX: number;
+  startY: number;
+  startZoomX: number;
+  startZoomY: number;
+}
+
 interface LastBoxSize {
   width: number;
   height: number;
 }
+
+interface ZoomState {
+  scale: number;
+  x: number;
+  y: number;
+}
+
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 4;
+const ZOOM_STEP = 0.1;
 
 // Keposhka regime colors
 const COLORS = {
@@ -72,6 +91,14 @@ export function StageBoard() {
   });
   const [lastBoxSize, setLastBoxSize] = useState<LastBoxSize | null>(null);
   const [nodeUpdateTrigger, setNodeUpdateTrigger] = useState(0);
+  const [zoom, setZoom] = useState<ZoomState>({ scale: 1, x: 0, y: 0 });
+  const [pan, setPan] = useState<PanState>({
+    isPanning: false,
+    startX: 0,
+    startY: 0,
+    startZoomX: 0,
+    startZoomY: 0,
+  });
 
   const currentImage = useStore((s) => s.currentImage);
   const boxes = useStore((s) => s.boxes);
@@ -107,6 +134,70 @@ export function StageBoard() {
     return () => resizeObserver.disconnect();
   }, []);
 
+  const handleImageLoad = useCallback((dims: { width: number; height: number; scale: number }) => {
+    setImageSize(dims);
+    // Reset zoom when image changes
+    setZoom({ scale: 1, x: 0, y: 0 });
+  }, []);
+
+  // Zoom functions
+  const handleZoomIn = useCallback(() => {
+    setZoom((prev) => {
+      const newScale = Math.min(prev.scale + ZOOM_STEP, MAX_ZOOM);
+      // Zoom toward center
+      const centerX = containerSize.width / 2;
+      const centerY = containerSize.height / 2;
+      const newX = centerX - (centerX - prev.x) * (newScale / prev.scale);
+      const newY = centerY - (centerY - prev.y) * (newScale / prev.scale);
+      return { scale: newScale, x: newX, y: newY };
+    });
+  }, [containerSize]);
+
+  const handleZoomOut = useCallback(() => {
+    setZoom((prev) => {
+      const newScale = Math.max(prev.scale - ZOOM_STEP, MIN_ZOOM);
+      const centerX = containerSize.width / 2;
+      const centerY = containerSize.height / 2;
+      const newX = centerX - (centerX - prev.x) * (newScale / prev.scale);
+      const newY = centerY - (centerY - prev.y) * (newScale / prev.scale);
+      return { scale: newScale, x: newX, y: newY };
+    });
+  }, [containerSize]);
+
+  const handleZoomReset = useCallback(() => {
+    setZoom({ scale: 1, x: 0, y: 0 });
+  }, []);
+
+  // Wheel zoom handler
+  const handleWheel = useCallback(
+    (e: Konva.KonvaEventObject<WheelEvent>) => {
+      e.evt.preventDefault();
+      const stage = stageRef.current;
+      if (!stage) return;
+
+      const pointer = stage.getPointerPosition();
+      if (!pointer) return;
+
+      const scaleBy = 1.08;
+      const oldScale = zoom.scale;
+      const newScale = e.evt.deltaY < 0
+        ? Math.min(oldScale * scaleBy, MAX_ZOOM)
+        : Math.max(oldScale / scaleBy, MIN_ZOOM);
+
+      // Zoom toward pointer position
+      const mousePointTo = {
+        x: (pointer.x - zoom.x) / oldScale,
+        y: (pointer.y - zoom.y) / oldScale,
+      };
+
+      const newX = pointer.x - mousePointTo.x * newScale;
+      const newY = pointer.y - mousePointTo.y * newScale;
+
+      setZoom({ scale: newScale, x: newX, y: newY });
+    },
+    [zoom]
+  );
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeElement = document.activeElement;
@@ -120,22 +211,38 @@ export function StageBoard() {
         }
       } else if (e.key === 'Escape') {
         setSelectedBoxId(null);
+      } else if (e.key === '+' || e.key === '=') {
+        handleZoomIn();
+      } else if (e.key === '-' || e.key === '_') {
+        handleZoomOut();
+      } else if (e.key === '0') {
+        handleZoomReset();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedBoxId, deleteBox, setSelectedBoxId]);
-
-  const handleImageLoad = useCallback((dims: { width: number; height: number; scale: number }) => {
-    setImageSize(dims);
-  }, []);
+  }, [selectedBoxId, deleteBox, setSelectedBoxId, handleZoomIn, handleZoomOut, handleZoomReset]);
 
   const generateId = () => crypto.randomUUID();
 
   // Calculate the Group offset for coordinate transformation
   const groupOffsetX = (containerSize.width - imageSize.width) / 2;
   const groupOffsetY = (containerSize.height - imageSize.height) / 2;
+
+  // Transform screen coordinates to image coordinates (accounting for zoom)
+  const screenToImageCoords = useCallback(
+    (screenX: number, screenY: number) => {
+      // First, transform from screen to stage coordinates (reverse zoom transform)
+      const stageX = (screenX - zoom.x) / zoom.scale;
+      const stageY = (screenY - zoom.y) / zoom.scale;
+      // Then, transform from stage to image coordinates (reverse group offset)
+      const imageX = stageX - groupOffsetX;
+      const imageY = stageY - groupOffsetY;
+      return { x: imageX, y: imageY };
+    },
+    [zoom, groupOffsetX, groupOffsetY]
+  );
 
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const clickedOnEmpty = e.target === e.target.getStage() || e.target.name() === 'background-image';
@@ -147,9 +254,20 @@ export function StageBoard() {
     const pos = stage.getPointerPosition();
     if (!pos) return;
 
-    // Adjust coordinates to be relative to the centered Group
-    const adjustedX = pos.x - groupOffsetX;
-    const adjustedY = pos.y - groupOffsetY;
+    // Ctrl+click: start panning
+    if (e.evt.ctrlKey) {
+      setPan({
+        isPanning: true,
+        startX: pos.x,
+        startY: pos.y,
+        startZoomX: zoom.x,
+        startZoomY: zoom.y,
+      });
+      return;
+    }
+
+    // Adjust coordinates to be relative to the centered Group (with zoom)
+    const { x: adjustedX, y: adjustedY } = screenToImageCoords(pos.x, pos.y);
 
     if (adjustedX < 0 || adjustedY < 0 || adjustedX > imageSize.width || adjustedY > imageSize.height) return;
 
@@ -163,15 +281,27 @@ export function StageBoard() {
   };
 
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    if (!drawing.isDrawing) return;
     const stage = e.target.getStage();
     if (!stage) return;
     const pos = stage.getPointerPosition();
     if (!pos) return;
 
-    // Adjust coordinates to be relative to the centered Group
-    const adjustedX = pos.x - groupOffsetX;
-    const adjustedY = pos.y - groupOffsetY;
+    // Handle panning
+    if (pan.isPanning) {
+      const dx = pos.x - pan.startX;
+      const dy = pos.y - pan.startY;
+      setZoom((prev) => ({
+        ...prev,
+        x: pan.startZoomX + dx,
+        y: pan.startZoomY + dy,
+      }));
+      return;
+    }
+
+    if (!drawing.isDrawing) return;
+
+    // Adjust coordinates to be relative to the centered Group (with zoom)
+    const { x: adjustedX, y: adjustedY } = screenToImageCoords(pos.x, pos.y);
 
     const clampedX = Math.max(0, Math.min(adjustedX, imageSize.width));
     const clampedY = Math.max(0, Math.min(adjustedY, imageSize.height));
@@ -184,6 +314,18 @@ export function StageBoard() {
   };
 
   const handleMouseUp = () => {
+    // End panning
+    if (pan.isPanning) {
+      setPan({
+        isPanning: false,
+        startX: 0,
+        startY: 0,
+        startZoomX: 0,
+        startZoomY: 0,
+      });
+      return;
+    }
+
     if (!drawing.isDrawing) return;
 
     const dragWidth = Math.abs(drawing.currentX - drawing.startX);
@@ -407,11 +549,16 @@ export function StageBoard() {
           ref={stageRef}
           width={containerSize.width}
           height={containerSize.height}
+          scaleX={zoom.scale}
+          scaleY={zoom.scale}
+          x={zoom.x}
+          y={zoom.y}
+          onWheel={handleWheel}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
-          style={{ cursor: drawing.isDrawing ? 'crosshair' : 'default' }}
+          style={{ cursor: pan.isPanning ? 'grabbing' : drawing.isDrawing ? 'crosshair' : 'default' }}
         >
           <Layer>
             <Group
@@ -570,6 +717,12 @@ export function StageBoard() {
             </kbd>
             Dígrafo
           </span>
+          <span className="text-[11px] font-mono text-keposhka-cream uppercase">
+            <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
+              CTRL+DRAG
+            </kbd>
+            Mover
+          </span>
         </div>
       </div>
 
@@ -592,6 +745,33 @@ export function StageBoard() {
             SECTORES: <span className="text-keposhka-cream font-bold">{boxes.length}</span>
           </span>
         </div>
+      </div>
+
+      {/* Zoom controls */}
+      <div className="absolute bottom-4 right-4 flex items-center gap-1">
+        <button
+          onClick={handleZoomOut}
+          disabled={zoom.scale <= MIN_ZOOM}
+          className="w-8 h-8 bg-keposhka-black/90 border-2 border-keposhka-steel text-keposhka-cream font-mono font-bold text-lg hover:border-keposhka-red hover:text-keposhka-red transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          title="Zoom out"
+        >
+          −
+        </button>
+        <button
+          onClick={handleZoomReset}
+          className="h-8 px-2 bg-keposhka-black/90 border-2 border-keposhka-steel text-keposhka-cream font-mono text-xs hover:border-keposhka-red hover:text-keposhka-red transition-colors"
+          title="Reset zoom"
+        >
+          {Math.round(zoom.scale * 100)}%
+        </button>
+        <button
+          onClick={handleZoomIn}
+          disabled={zoom.scale >= MAX_ZOOM}
+          className="w-8 h-8 bg-keposhka-black/90 border-2 border-keposhka-steel text-keposhka-cream font-mono font-bold text-lg hover:border-keposhka-red hover:text-keposhka-red transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          title="Zoom in"
+        >
+          +
+        </button>
       </div>
 
       {/* Context Menu */}
