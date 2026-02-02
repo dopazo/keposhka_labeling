@@ -700,8 +700,8 @@ export function StageBoard() {
             </kbd>
             Dibujar
           </span>
-          <span className={`text-[11px] font-mono uppercase ${lastBoxSize ? 'text-keposhka-cream' : 'text-keposhka-steel'}`}>
-            <kbd className={`px-1.5 py-0.5 bg-keposhka-steel border mr-1 ${lastBoxSize ? 'border-keposhka-green text-keposhka-green' : 'border-keposhka-steel text-keposhka-steel'}`}>
+          <span className="text-[11px] font-mono text-keposhka-cream uppercase">
+            <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
               CLICK
             </kbd>
             Repetir
