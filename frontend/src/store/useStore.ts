@@ -33,6 +33,7 @@ interface AppState {
   images: ImageMeta[];
   selectedBoxId: string | null;
   validation: ValidationState;
+  boxesVisible: boolean;
 
   // Phase 5: Filter & Search State
   filterStatus: FilterStatus;
@@ -72,6 +73,10 @@ interface AppState {
 
   // Actions - Selection
   setSelectedBoxId: (id: string | null) => void;
+
+  // Actions - Boxes Visibility
+  setBoxesVisible: (visible: boolean) => void;
+  toggleBoxesVisible: () => void;
 
   // Actions - Reset
   reset: () => void;
@@ -137,6 +142,7 @@ export const useStore = create<AppState>((set, get) => ({
   images: [],
   selectedBoxId: null,
   validation: initialValidation,
+  boxesVisible: true,
 
   // Phase 5: Filter & Search State
   filterStatus: 'all',
@@ -532,6 +538,10 @@ export const useStore = create<AppState>((set, get) => ({
 
   // Selection Actions
   setSelectedBoxId: (id) => set({ selectedBoxId: id }),
+
+  // Boxes Visibility Actions
+  setBoxesVisible: (visible) => set({ boxesVisible: visible }),
+  toggleBoxesVisible: () => set((state) => ({ boxesVisible: !state.boxesVisible })),
 
   // Reset
   reset: () =>

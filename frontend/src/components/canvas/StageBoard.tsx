@@ -108,6 +108,8 @@ export function StageBoard() {
   const deleteBox = useStore((s) => s.deleteBox);
   const setSelectedBoxId = useStore((s) => s.setSelectedBoxId);
   const updateCharCount = useStore((s) => s.updateCharCount);
+  const boxesVisible = useStore((s) => s.boxesVisible);
+  const toggleBoxesVisible = useStore((s) => s.toggleBoxesVisible);
 
   const boxRefs = useRef<Map<string, Konva.Rect>>(new Map());
 
@@ -217,12 +219,14 @@ export function StageBoard() {
         handleZoomOut();
       } else if (e.key === '0') {
         handleZoomReset();
+      } else if (e.key === 'v' || e.key === 'V') {
+        toggleBoxesVisible();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedBoxId, deleteBox, setSelectedBoxId, handleZoomIn, handleZoomOut, handleZoomReset]);
+  }, [selectedBoxId, deleteBox, setSelectedBoxId, handleZoomIn, handleZoomOut, handleZoomReset, toggleBoxesVisible]);
 
   const generateId = () => crypto.randomUUID();
 
@@ -265,6 +269,9 @@ export function StageBoard() {
       });
       return;
     }
+
+    // Don't allow drawing when boxes are hidden
+    if (!boxesVisible) return;
 
     // Adjust coordinates to be relative to the centered Group (with zoom)
     const { x: adjustedX, y: adjustedY } = screenToImageCoords(pos.x, pos.y);
@@ -575,7 +582,7 @@ export function StageBoard() {
               )}
 
               {/* Bounding Boxes - Brutalist style */}
-              {boxes.map((box) => {
+              {boxesVisible && boxes.map((box) => {
                 const isSelected = box.id === selectedBoxId;
                 const hasLabel = !!box.label;
 
@@ -678,7 +685,7 @@ export function StageBoard() {
                 />
               )}
 
-              <BoxTransformer selectedNode={selectedNode} />
+              {boxesVisible && <BoxTransformer selectedNode={selectedNode} />}
             </Group>
           </Layer>
         </Stage>
@@ -738,13 +745,29 @@ export function StageBoard() {
         </div>
       </div>
 
-      {/* Box count indicator */}
-      <div className="absolute top-4 right-4 pointer-events-none">
-        <div className="bg-keposhka-black/90 border-2 border-keposhka-steel px-3 py-1.5">
+      {/* Box count indicator and visibility toggle */}
+      <div className="absolute top-4 right-4 flex flex-col gap-2">
+        <div className="bg-keposhka-black/90 border-2 border-keposhka-steel px-3 py-1.5 pointer-events-none">
           <span className="text-xs font-mono text-keposhka-steel uppercase">
             SECTORES: <span className="text-keposhka-cream font-bold">{boxes.length}</span>
           </span>
         </div>
+        <button
+          onClick={toggleBoxesVisible}
+          className={`
+            h-8 px-3 font-mono text-xs uppercase tracking-wide
+            border-2 transition-all duration-100
+            flex items-center justify-center gap-2
+            ${boxesVisible
+              ? 'bg-keposhka-black/90 border-keposhka-green text-keposhka-green hover:bg-keposhka-green/20'
+              : 'bg-keposhka-black/90 border-keposhka-red text-keposhka-red hover:bg-keposhka-red/20'
+            }
+          `}
+          title={boxesVisible ? 'Ocultar rectángulos (V)' : 'Mostrar rectángulos (V)'}
+        >
+          <span>{boxesVisible ? '◩' : '◱'}</span>
+          <span>{boxesVisible ? 'VISIBLE' : 'OCULTO'}</span>
+        </button>
       </div>
 
       {/* Zoom controls */}
