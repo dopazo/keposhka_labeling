@@ -1,15 +1,57 @@
 /**
  * Reference Panel Component - DRAAG REGIME EDITION
- * Brutalist aesthetic - Shows Keposhka alphabet reference
+ * Shows keyboard → Keposhka character mapping
  */
 
 import { KEPOSHKA_ALPHABET, DIGRAPHS } from '@/lib/validator';
 
+// Mapping of keyboard characters to Keposhka font characters
+// For digraphs, we use special characters in the font
+const KEYBOARD_TO_KEPOSHKA_MAP = {
+  // Numbers - direct mapping
+  '0': '0', '1': '1', '2': '2', '3': '3', '4': '4',
+  '5': '5', '6': '6', '7': '7', '8': '8', '9': '9',
+
+  // Letters - direct mapping
+  'A': 'A', 'a': 'a', 'B': 'B', 'b': 'b', 'C': 'C', 'c': 'c',
+  'D': 'D', 'd': 'd', 'E': 'E', 'e': 'e', 'F': 'F', 'f': 'f',
+  'G': 'G', 'g': 'g', 'H': 'H', 'h': 'h', 'I': 'I', 'i': 'i',
+  'J': 'J', 'j': 'j', 'K': 'K', 'k': 'k', 'L': 'L', 'l': 'l',
+  'M': 'M', 'm': 'm', 'N': 'N', 'n': 'n', 'O': 'O', 'o': 'o',
+  'P': 'P', 'p': 'p', 'Q': 'Q', 'q': 'q', 'R': 'R', 'r': 'r',
+  'S': 'S', 's': 's', 'T': 'T', 't': 't', 'U': 'U', 'u': 'u',
+  'V': 'V', 'v': 'v', 'W': 'W', 'w': 'w', 'X': 'X', 'x': 'x',
+  'Y': 'Y', 'y': 'y', 'Z': 'Z', 'z': 'z',
+
+  // Digraphs - special characters mapping
+  '(': '(', // CH
+  ')': ')', // ch
+  '[': '[', // GH
+  '\\': '\\', // gh
+  ']': ']', // SH
+  '{': '{', // sh
+  '|': '|', // TH
+  '}': '}', // th
+} as const;
+
+// Map keyboard characters to their label equivalents
+const KEYBOARD_TO_LABEL = {
+  '[': 'TH',
+  ']': 'th',
+  '{': 'SH',
+  '}': 'sh',
+  '(': 'CH',
+  ')': 'ch',
+  '\\': 'GH',
+  '|': 'gh',
+} as const;
+
 export function ReferencePanel() {
-  // Group alphabet into sections for display
-  const numbers = KEPOSHKA_ALPHABET.slice(0, 10);
-  const letters = KEPOSHKA_ALPHABET.slice(10).filter(char => !DIGRAPHS.includes(char));
-  const digraphs = DIGRAPHS;
+  // Group characters
+  const numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  const uppercaseLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const lowercaseLetters = 'abcdefghijklmnopqrstuvwxyz'.split('');
+  const digraphKeys = ['[', ']', '{', '}', '(', ')', '\\', '|'];
 
   return (
     <div className="h-full w-full bg-keposhka-concrete border-l-4 border-keposhka-black flex flex-col noise-overlay">
@@ -18,12 +60,12 @@ export function ReferencePanel() {
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-keposhka-black flex items-center justify-center border border-keposhka-cream/20">
-              <span className="font-display text-keposhka-cream text-sm">Aa</span>
+              <span className="font-display text-keposhka-cream text-sm">⌨</span>
             </div>
             <div>
               <h2 className="text-lg tracking-[0.2em] leading-none">REFERENCIA</h2>
               <p className="text-[10px] tracking-[0.2em] text-keposhka-cream/60 mt-0.5">
-                ALFABETO KEPOSHKA
+                MAPEO TECLADO → KEPOSHKA
               </p>
             </div>
           </div>
@@ -36,137 +78,155 @@ export function ReferencePanel() {
       </div>
 
       {/* CONTENT AREA */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Numbers Section */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {/* Uppercase Letters Section */}
         <section>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-3">
             <span className="text-xs font-heading uppercase tracking-[0.15em] text-keposhka-red">
-              NÚMEROS
+              MAYÚSCULAS
             </span>
             <div className="h-px flex-1 bg-keposhka-steel" />
-            <span className="text-[10px] font-mono text-keposhka-steel">[0-9]</span>
+            <span className="text-[10px] font-mono text-keposhka-steel">[A-Z]</span>
           </div>
-          <div className="grid grid-cols-5 gap-1">
-            {numbers.map((char, idx) => (
-              <div
-                key={char}
-                className="
-                  aspect-square flex flex-col items-center justify-center
-                  bg-keposhka-black border-2 border-keposhka-steel
-                  hover:border-keposhka-red transition-colors
-                  group
-                "
-              >
-                <span className="font-mono text-lg text-keposhka-cream group-hover:text-keposhka-red transition-colors">
-                  {char}
-                </span>
-                <span className="text-[8px] font-mono text-keposhka-steel">
-                  {String(idx).padStart(2, '0')}
-                </span>
-              </div>
-            ))}
+          <div className="grid grid-cols-6 gap-1.5">
+            {uppercaseLetters.map((key) => {
+              const idx = KEPOSHKA_ALPHABET.indexOf(key);
+              return (
+                <div
+                  key={key}
+                  className="
+                    bg-keposhka-steel/30 border border-keposhka-steel
+                    hover:border-keposhka-red transition-colors
+                    p-1.5 flex flex-col items-center gap-0.5
+                  "
+                >
+                  <div className="font-mono text-xs text-keposhka-cream/60">
+                    {key}
+                  </div>
+                  <div className="font-['Keposhka'] text-2xl text-keposhka-cream leading-none">
+                    {KEYBOARD_TO_KEPOSHKA_MAP[key as keyof typeof KEYBOARD_TO_KEPOSHKA_MAP]}
+                  </div>
+                  <div className="text-[7px] font-mono text-keposhka-steel">
+                    {String(idx).padStart(2, '0')}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
 
-        {/* Digraphs Section - Important */}
+        {/* Lowercase Letters Section */}
         <section>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xs font-heading uppercase tracking-[0.15em] text-keposhka-red">
+              MINÚSCULAS
+            </span>
+            <div className="h-px flex-1 bg-keposhka-steel" />
+            <span className="text-[10px] font-mono text-keposhka-steel">[a-z]</span>
+          </div>
+          <div className="grid grid-cols-6 gap-1.5">
+            {lowercaseLetters.map((key) => {
+              const idx = KEPOSHKA_ALPHABET.indexOf(key);
+              return (
+                <div
+                  key={key}
+                  className="
+                    bg-keposhka-black border border-keposhka-steel/50
+                    hover:border-keposhka-red/70 transition-colors
+                    p-1.5 flex flex-col items-center gap-0.5
+                  "
+                >
+                  <div className="font-mono text-xs text-keposhka-cream/50">
+                    {key}
+                  </div>
+                  <div className="font-['Keposhka'] text-2xl text-keposhka-cream/80 leading-none">
+                    {KEYBOARD_TO_KEPOSHKA_MAP[key as keyof typeof KEYBOARD_TO_KEPOSHKA_MAP]}
+                  </div>
+                  <div className="text-[7px] font-mono text-keposhka-steel">
+                    {String(idx).padStart(2, '0')}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Digraphs Section */}
+        <section>
+          <div className="flex items-center gap-2 mb-3">
             <span className="text-xs font-heading uppercase tracking-[0.15em] text-keposhka-red">
               DÍGRAFOS
             </span>
             <div className="h-px flex-1 bg-keposhka-steel" />
             <span className="text-[10px] font-mono text-keposhka-steel">[2 CHARS]</span>
           </div>
-          <div className="grid grid-cols-4 gap-1">
-            {digraphs.map((char) => {
-              const idx = KEPOSHKA_ALPHABET.indexOf(char);
+          <div className="grid grid-cols-2 gap-2">
+            {digraphKeys.map((key) => {
+              const label = KEYBOARD_TO_LABEL[key as keyof typeof KEYBOARD_TO_LABEL];
+              const idx = KEPOSHKA_ALPHABET.indexOf(label);
               return (
                 <div
-                  key={char}
+                  key={key}
                   className="
-                    py-2 flex flex-col items-center justify-center
                     bg-keposhka-red/20 border-2 border-keposhka-red
                     hover:bg-keposhka-red/40 transition-colors
-                    group
+                    p-3 flex flex-col items-center justify-center gap-2
                   "
                 >
-                  <span className="font-mono text-base text-keposhka-cream font-bold">
-                    {char}
-                  </span>
-                  <span className="text-[8px] font-mono text-keposhka-red">
-                    {String(idx).padStart(2, '0')}
-                  </span>
+                  <div className="flex items-center gap-3 whitespace-nowrap">
+                    <div className="font-mono text-base text-keposhka-cream font-bold min-w-[2rem]">
+                      {label}
+                    </div>
+                    <div className="text-keposhka-cream/60 text-sm">→</div>
+                    <div className="font-['Keposhka'] text-3xl text-keposhka-cream leading-none">
+                      {KEYBOARD_TO_KEPOSHKA_MAP[key as keyof typeof KEYBOARD_TO_KEPOSHKA_MAP]}
+                    </div>
+                  </div>
+                  <div className="text-[8px] font-mono text-keposhka-red">
+                    ID: {String(idx).padStart(2, '0')}
+                  </div>
                 </div>
               );
             })}
           </div>
-          <p className="mt-2 text-[10px] font-mono text-keposhka-steel uppercase">
-            Clic derecho en caja para marcar como dígrafo
+          <p className="mt-2 text-[10px] font-mono text-keposhka-steel uppercase leading-relaxed">
+            → Clic derecho en caja para marcar como dígrafo (charCount=2)
           </p>
         </section>
 
-        {/* Letters Section */}
+        {/* Numbers Section */}
         <section>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-3">
             <span className="text-xs font-heading uppercase tracking-[0.15em] text-keposhka-red">
-              LETRAS
+              NÚMEROS
             </span>
             <div className="h-px flex-1 bg-keposhka-steel" />
-            <span className="text-[10px] font-mono text-keposhka-steel">[A-Z]</span>
+            <span className="text-[10px] font-mono text-keposhka-steel">[0-9]</span>
           </div>
-          <div className="grid grid-cols-6 gap-1">
-            {letters.map((char) => {
-              const idx = KEPOSHKA_ALPHABET.indexOf(char);
-              const isUppercase = char === char.toUpperCase() && char !== char.toLowerCase();
+          <div className="grid grid-cols-5 gap-2">
+            {numbers.map((key) => {
+              const idx = KEPOSHKA_ALPHABET.indexOf(key);
               return (
                 <div
-                  key={`${char}-${idx}`}
-                  className={`
-                    aspect-square flex flex-col items-center justify-center
-                    border-2 transition-colors group
-                    ${isUppercase
-                      ? 'bg-keposhka-steel/30 border-keposhka-steel hover:border-keposhka-red'
-                      : 'bg-keposhka-black border-keposhka-steel/50 hover:border-keposhka-red/70'
-                    }
-                  `}
+                  key={key}
+                  className="
+                    bg-keposhka-black border-2 border-keposhka-steel
+                    hover:border-keposhka-red transition-colors
+                    p-2 flex flex-col items-center gap-1
+                  "
                 >
-                  <span className={`
-                    font-mono text-sm transition-colors
-                    ${isUppercase
-                      ? 'text-keposhka-cream group-hover:text-keposhka-red'
-                      : 'text-keposhka-cream/70 group-hover:text-keposhka-red/80'
-                    }
-                  `}>
-                    {char}
-                  </span>
-                  <span className="text-[7px] font-mono text-keposhka-steel">
-                    {String(idx).padStart(2, '0')}
-                  </span>
+                  <div className="font-mono text-sm text-keposhka-cream/60">
+                    {key}
+                  </div>
+                  <div className="font-['Keposhka'] text-3xl text-keposhka-cream leading-none">
+                    {KEYBOARD_TO_KEPOSHKA_MAP[key as keyof typeof KEYBOARD_TO_KEPOSHKA_MAP]}
+                  </div>
+                  <div className="text-[8px] font-mono text-keposhka-steel mt-1">
+                    ID: {String(idx).padStart(2, '0')}
+                  </div>
                 </div>
               );
             })}
-          </div>
-        </section>
-
-        {/* Image placeholder - for when alphabet image is available */}
-        <section className="mt-4">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-heading uppercase tracking-[0.15em] text-keposhka-steel">
-              IMAGEN DE REFERENCIA
-            </span>
-            <div className="h-px flex-1 bg-keposhka-steel" />
-          </div>
-          <div className="
-            aspect-video bg-keposhka-black/50 border-2 border-dashed border-keposhka-steel
-            flex flex-col items-center justify-center
-          ">
-            <div className="text-3xl text-keposhka-steel/30 mb-2">☐</div>
-            <span className="text-[10px] font-mono text-keposhka-steel uppercase">
-              /reference/alphabet.png
-            </span>
-            <span className="text-[9px] font-mono text-keposhka-steel/50 mt-1">
-              [PENDIENTE]
-            </span>
           </div>
         </section>
       </div>

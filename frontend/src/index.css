@@ -7,6 +7,15 @@
    Brutalista / Distopía / The Black Parade
    ============================================ */
 
+/* Keposhka Font */
+@font-face {
+  font-family: 'Keposhka';
+  src: url('/fonts/KeposhkaRegular-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* Keposhka Official Colors */
   --keposhka-red: #89181A;
