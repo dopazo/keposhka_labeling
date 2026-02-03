@@ -651,6 +651,12 @@ export function StageBoard() {
                 const cw = canvasCoords.width;
                 const ch = canvasCoords.height;
 
+                // Scale stroke and dash with dampened zoom for consistent visual appearance
+                const zoomFactor = Math.sqrt(zoom.scale);
+                const boxStrokeWidth = (isSelected ? 2 : 1) / zoomFactor;
+                const boxDash = hasLabel ? undefined : [6 / zoomFactor, 4 / zoomFactor];
+                const boxShadowBlur = isSelected ? 15 / zoomFactor : 0;
+
                 return (
                   <Group key={box.id}>
                     {/* Box Rectangle */}
@@ -667,8 +673,8 @@ export function StageBoard() {
                       width={cw}
                       height={ch}
                       stroke={hasLabel ? COLORS.greenLight : COLORS.red}
-                      strokeWidth={isSelected ? 2 : 1}
-                      dash={hasLabel ? undefined : [6, 4]}
+                      strokeWidth={boxStrokeWidth}
+                      dash={boxDash}
                       fill={isSelected ? 'rgba(137, 24, 26, 0.2)' : 'rgba(245, 240, 230, 0.05)'}
                       cornerRadius={0}
                       draggable
@@ -678,77 +684,103 @@ export function StageBoard() {
                       onDragEnd={(e) => handleBoxDragEnd(box.id, e)}
                       onTransformEnd={(e) => handleBoxTransformEnd(box.id, e)}
                       shadowColor={isSelected ? COLORS.red : undefined}
-                      shadowBlur={isSelected ? 15 : 0}
+                      shadowBlur={boxShadowBlur}
                       shadowOpacity={isSelected ? 0.6 : 0}
                     />
 
                     {/* Label below box - Industrial style */}
-                    {box.label && (
-                      <>
-                        {/* Label background */}
-                        <Rect
-                          x={cx}
-                          y={cy + ch + 2}
-                          width={box.label.length * 10 + 8}
-                          height={18}
-                          fill={COLORS.black}
-                          stroke={COLORS.greenLight}
-                          strokeWidth={1}
-                        />
-                        <Text
-                          x={cx + 4}
-                          y={cy + ch + 5}
-                          text={box.label}
-                          fontSize={12}
-                          fontFamily="JetBrains Mono, monospace"
-                          fontStyle="bold"
-                          fill={COLORS.greenLight}
-                        />
-                      </>
-                    )}
+                    {box.label && (() => {
+                      // Scale label with dampened zoom - grows slightly but not proportionally
+                      // Using square root gives a gentler curve: at 2x zoom, labels are ~1.4x size
+                      const zoomFactor = Math.sqrt(zoom.scale);
+                      const labelFontSize = 12 / zoomFactor;
+                      const labelPadding = 4 / zoomFactor;
+                      const labelHeight = 18 / zoomFactor;
+                      const labelCharWidth = 10 / zoomFactor;
+                      const labelGap = 2 / zoomFactor;
+                      const labelStroke = 1 / zoomFactor;
+                      return (
+                        <>
+                          {/* Label background */}
+                          <Rect
+                            x={cx}
+                            y={cy + ch + labelGap}
+                            width={box.label.length * labelCharWidth + labelPadding * 2}
+                            height={labelHeight}
+                            fill={COLORS.black}
+                            stroke={COLORS.greenLight}
+                            strokeWidth={labelStroke}
+                          />
+                          <Text
+                            x={cx + labelPadding}
+                            y={cy + ch + labelGap + labelPadding * 0.75}
+                            text={box.label}
+                            fontSize={labelFontSize}
+                            fontFamily="JetBrains Mono, monospace"
+                            fontStyle="bold"
+                            fill={COLORS.greenLight}
+                          />
+                        </>
+                      );
+                    })()}
 
                     {/* CharCount badge - Regime style */}
-                    {box.charCount > 1 && (
-                      <>
-                        <Rect
-                          x={cx + cw - 20}
-                          y={cy - 10}
-                          width={22}
-                          height={18}
-                          fill={COLORS.red}
-                          stroke={COLORS.black}
-                          strokeWidth={2}
-                        />
-                        <Text
-                          x={cx + cw - 14}
-                          y={cy - 7}
-                          text={String(box.charCount)}
-                          fontSize={11}
-                          fontFamily="JetBrains Mono, monospace"
-                          fontStyle="bold"
-                          fill={COLORS.white}
-                        />
-                      </>
-                    )}
+                    {box.charCount > 1 && (() => {
+                      // Scale badge with dampened zoom - grows slightly but not proportionally
+                      const zoomFactor = Math.sqrt(zoom.scale);
+                      const badgeWidth = 22 / zoomFactor;
+                      const badgeHeight = 18 / zoomFactor;
+                      const badgeOffsetX = 20 / zoomFactor;
+                      const badgeOffsetY = 10 / zoomFactor;
+                      const badgeFontSize = 11 / zoomFactor;
+                      const badgeTextOffsetX = 14 / zoomFactor;
+                      const badgeTextOffsetY = 7 / zoomFactor;
+                      const badgeStroke = 2 / zoomFactor;
+                      return (
+                        <>
+                          <Rect
+                            x={cx + cw - badgeOffsetX}
+                            y={cy - badgeOffsetY}
+                            width={badgeWidth}
+                            height={badgeHeight}
+                            fill={COLORS.red}
+                            stroke={COLORS.black}
+                            strokeWidth={badgeStroke}
+                          />
+                          <Text
+                            x={cx + cw - badgeTextOffsetX}
+                            y={cy - badgeTextOffsetY}
+                            text={String(box.charCount)}
+                            fontSize={badgeFontSize}
+                            fontFamily="JetBrains Mono, monospace"
+                            fontStyle="bold"
+                            fill={COLORS.white}
+                          />
+                        </>
+                      );
+                    })()}
                   </Group>
                 );
               })}
 
               {/* Preview Box while drawing - Red dashed */}
-              {previewBox && previewBox.width > 0 && previewBox.height > 0 && (
-                <Rect
-                  x={previewBox.x}
-                  y={previewBox.y}
-                  width={previewBox.width}
-                  height={previewBox.height}
-                  stroke={COLORS.red}
-                  strokeWidth={2}
-                  dash={[8, 4]}
-                  fill="rgba(137, 24, 26, 0.15)"
-                  cornerRadius={0}
-                  listening={false}
-                />
-              )}
+              {previewBox && previewBox.width > 0 && previewBox.height > 0 && (() => {
+                const zoomFactor = Math.sqrt(zoom.scale);
+                return (
+                  <Rect
+                    x={previewBox.x}
+                    y={previewBox.y}
+                    width={previewBox.width}
+                    height={previewBox.height}
+                    stroke={COLORS.red}
+                    strokeWidth={2 / zoomFactor}
+                    dash={[8 / zoomFactor, 4 / zoomFactor]}
+                    fill="rgba(137, 24, 26, 0.15)"
+                    cornerRadius={0}
+                    listening={false}
+                  />
+                );
+              })()}
 
               {boxesVisible && <BoxTransformer selectedNode={selectedNode} />}
             </Group>
