@@ -67,8 +67,8 @@ export function groupBoxesIntoRows(boxes: BoundingBox[]): BoundingBox[][] {
   // Calculate average box height for dynamic threshold
   const avgHeight = boxes.reduce((sum, box) => sum + box.height, 0) / boxes.length;
 
-  // Dynamic threshold: ~30% of average box height
-  const rowThreshold = avgHeight * 0.3;
+  // Dynamic threshold: ~50% of average box height (tolerant of slight line inclination)
+  const rowThreshold = avgHeight * 0.5;
 
   // Sort boxes by Y position first (top to bottom)
   const sortedByY = [...boxes].sort((a, b) => {
