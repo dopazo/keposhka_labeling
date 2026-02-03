@@ -20,11 +20,25 @@ KEPOSHKA_ALPHABET = [
     'Z', 'z'                                            # 68-69
 ]
 
+# Mixed-case digraphs (e.g., "Th") that map to uppercase digraphs
+MIXED_CASE_DIGRAPHS = ['Ch', 'Gh', 'Sh', 'Th']
+
+
+def normalize_digraph(label: str) -> str:
+    """
+    Normalize a digraph to its canonical form.
+    Mixed-case digraphs (Th, Ch, etc.) are normalized to uppercase (TH, CH, etc.)
+    """
+    if label in MIXED_CASE_DIGRAPHS:
+        return label.upper()
+    return label
+
 
 def label_to_class_id(label: str) -> int:
-    """Convert label to YOLO class ID"""
+    """Convert label to YOLO class ID. Mixed-case digraphs are normalized first."""
+    normalized = normalize_digraph(label)
     try:
-        return KEPOSHKA_ALPHABET.index(label)
+        return KEPOSHKA_ALPHABET.index(normalized)
     except ValueError:
         raise ValueError(f"Invalid label: {label}")
 

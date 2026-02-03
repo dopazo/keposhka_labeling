@@ -16,14 +16,33 @@ export const KEPOSHKA_ALPHABET: readonly string[] = [
 
 export const DIGRAPHS: readonly string[] = ['CH', 'ch', 'GH', 'gh', 'SH', 'sh', 'TH', 'th'];
 
+// Mixed-case digraphs (e.g., "Th") that map to uppercase digraphs
+export const MIXED_CASE_DIGRAPHS: readonly string[] = ['Ch', 'Gh', 'Sh', 'Th'];
+
+// All valid digraphs including mixed-case variants
+const ALL_DIGRAPHS = new Set([...DIGRAPHS, ...MIXED_CASE_DIGRAPHS]);
+
 // Create a Set for faster lookup
 const VALID_CHARS = new Set(KEPOSHKA_ALPHABET);
 
 /**
+ * Normalize a digraph to its canonical form
+ * Mixed-case digraphs (Th, Ch, etc.) are normalized to uppercase (TH, CH, etc.)
+ */
+export function normalizeDigraph(label: string): string {
+  if (MIXED_CASE_DIGRAPHS.includes(label)) {
+    return label.toUpperCase();
+  }
+  return label;
+}
+
+/**
  * Convert label to YOLO class ID
+ * Mixed-case digraphs (Th, Ch, etc.) are normalized to uppercase before lookup
  */
 export function labelToClassId(label: string): number {
-  return KEPOSHKA_ALPHABET.indexOf(label);
+  const normalized = normalizeDigraph(label);
+  return KEPOSHKA_ALPHABET.indexOf(normalized);
 }
 
 /**
@@ -35,16 +54,20 @@ export function classIdToLabel(classId: number): string {
 
 /**
  * Check if a character is valid in Keposhka alphabet
+ * Accepts mixed-case digraphs (Th, Ch, etc.)
  */
 export function isValidChar(char: string): boolean {
-  return VALID_CHARS.has(char);
+  if (VALID_CHARS.has(char)) return true;
+  // Also accept mixed-case digraphs
+  if (MIXED_CASE_DIGRAPHS.includes(char)) return true;
+  return false;
 }
 
 /**
- * Check if a string is a digraph
+ * Check if a string is a digraph (including mixed-case variants)
  */
 export function isDigraph(str: string): boolean {
-  return (DIGRAPHS as readonly string[]).includes(str);
+  return ALL_DIGRAPHS.has(str);
 }
 
 /**

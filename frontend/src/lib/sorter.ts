@@ -5,7 +5,7 @@
  * and assigns labels based on spatial ordering (left-to-right, top-to-bottom).
  */
 import type { BoundingBox } from '@/lib/types';
-import { KEPOSHKA_ALPHABET } from '@/lib/validator';
+import { isValidChar } from '@/lib/validator';
 
 /**
  * Result of the sorting and assignment process
@@ -67,8 +67,8 @@ export function groupBoxesIntoRows(boxes: BoundingBox[]): BoundingBox[][] {
   // Calculate average box height for dynamic threshold
   const avgHeight = boxes.reduce((sum, box) => sum + box.height, 0) / boxes.length;
 
-  // Dynamic threshold: ~50% of average box height (tolerant of slight line inclination)
-  const rowThreshold = avgHeight * 0.5;
+  // Dynamic threshold: ~70% of average box height (tolerant of slight line inclination)
+  const rowThreshold = avgHeight * 0.7;
 
   // Sort boxes by Y position first (top to bottom)
   const sortedByY = [...boxes].sort((a, b) => {
@@ -123,9 +123,10 @@ export function flattenRows(rows: BoundingBox[][]): BoundingBox[] {
 
 /**
  * Check if a character is valid in Keposhka alphabet (single char or digraph)
+ * Uses the validator's isValidChar which handles mixed-case digraphs
  */
 function isValidKeposhkaChar(char: string): boolean {
-  return KEPOSHKA_ALPHABET.includes(char);
+  return isValidChar(char);
 }
 
 /**
