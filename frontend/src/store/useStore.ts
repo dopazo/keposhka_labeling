@@ -35,6 +35,9 @@ interface AppState {
   validation: ValidationState;
   boxesVisible: boolean;
 
+  // Canvas scale (for converting canvas coords <-> image coords)
+  canvasScale: number;
+
   // Phase 5: Filter & Search State
   filterStatus: FilterStatus;
   searchQuery: string;
@@ -83,6 +86,9 @@ interface AppState {
 
   // Actions - Recalculate
   recalculate: () => void;
+
+  // Actions - Canvas Scale
+  setCanvasScale: (scale: number) => void;
 }
 
 // Helper function to recalculate labels and validation
@@ -143,6 +149,9 @@ export const useStore = create<AppState>((set, get) => ({
   selectedBoxId: null,
   validation: initialValidation,
   boxesVisible: true,
+
+  // Canvas scale (1 = no scaling, 0.5 = image shown at 50%)
+  canvasScale: 1,
 
   // Phase 5: Filter & Search State
   filterStatus: 'all',
@@ -348,6 +357,7 @@ export const useStore = create<AppState>((set, get) => ({
       return result;
     }
 
+    // Boxes are stored in original image coordinates (not canvas coordinates)
     // Prepare payload for backend
     const payload = {
       filename: state.currentImage.filename,
@@ -435,6 +445,7 @@ export const useStore = create<AppState>((set, get) => ({
       return result;
     }
 
+    // Boxes are stored in original image coordinates (not canvas coordinates)
     // Prepare payload for backend
     const payload = {
       filename: state.currentImage.filename,
@@ -561,4 +572,7 @@ export const useStore = create<AppState>((set, get) => ({
         validation: result.validation,
       };
     }),
+
+  // Canvas scale management
+  setCanvasScale: (scale) => set({ canvasScale: scale }),
 }));

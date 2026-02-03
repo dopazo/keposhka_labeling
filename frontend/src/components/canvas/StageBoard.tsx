@@ -110,6 +110,7 @@ export function StageBoard() {
   const updateCharCount = useStore((s) => s.updateCharCount);
   const boxesVisible = useStore((s) => s.boxesVisible);
   const toggleBoxesVisible = useStore((s) => s.toggleBoxesVisible);
+  const setCanvasScale = useStore((s) => s.setCanvasScale);
 
   const boxRefs = useRef<Map<string, Konva.Rect>>(new Map());
 
@@ -138,9 +139,11 @@ export function StageBoard() {
 
   const handleImageLoad = useCallback((dims: { width: number; height: number; scale: number }) => {
     setImageSize(dims);
+    // Update canvas scale in store for coordinate conversions
+    setCanvasScale(dims.scale);
     // Reset zoom when image changes
     setZoom({ scale: 1, x: 0, y: 0 });
-  }, []);
+  }, [setCanvasScale]);
 
   // Zoom functions
   const handleZoomIn = useCallback(() => {
@@ -234,18 +237,48 @@ export function StageBoard() {
   const groupOffsetX = (containerSize.width - imageSize.width) / 2;
   const groupOffsetY = (containerSize.height - imageSize.height) / 2;
 
-  // Transform screen coordinates to image coordinates (accounting for zoom)
-  const screenToImageCoords = useCallback(
+  // Transform screen coordinates to canvas coordinates (accounting for zoom)
+  const screenToCanvasCoords = useCallback(
     (screenX: number, screenY: number) => {
       // First, transform from screen to stage coordinates (reverse zoom transform)
       const stageX = (screenX - zoom.x) / zoom.scale;
       const stageY = (screenY - zoom.y) / zoom.scale;
-      // Then, transform from stage to image coordinates (reverse group offset)
-      const imageX = stageX - groupOffsetX;
-      const imageY = stageY - groupOffsetY;
-      return { x: imageX, y: imageY };
+      // Then, transform from stage to canvas coordinates (reverse group offset)
+      const canvasX = stageX - groupOffsetX;
+      const canvasY = stageY - groupOffsetY;
+      return { x: canvasX, y: canvasY };
     },
     [zoom, groupOffsetX, groupOffsetY]
+  );
+
+  // Convert canvas coordinates to original image coordinates
+  // Canvas coords are scaled, divide by scale to get original
+  const canvasToOriginal = useCallback(
+    (canvasX: number, canvasY: number, canvasW: number, canvasH: number) => {
+      const scale = imageSize.scale || 1;
+      return {
+        x: canvasX / scale,
+        y: canvasY / scale,
+        width: canvasW / scale,
+        height: canvasH / scale,
+      };
+    },
+    [imageSize.scale]
+  );
+
+  // Convert original image coordinates to canvas coordinates
+  // Multiply by scale to get canvas coords
+  const originalToCanvas = useCallback(
+    (origX: number, origY: number, origW: number, origH: number) => {
+      const scale = imageSize.scale || 1;
+      return {
+        x: origX * scale,
+        y: origY * scale,
+        width: origW * scale,
+        height: origH * scale,
+      };
+    },
+    [imageSize.scale]
   );
 
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -274,7 +307,7 @@ export function StageBoard() {
     if (!boxesVisible) return;
 
     // Adjust coordinates to be relative to the centered Group (with zoom)
-    const { x: adjustedX, y: adjustedY } = screenToImageCoords(pos.x, pos.y);
+    const { x: adjustedX, y: adjustedY } = screenToCanvasCoords(pos.x, pos.y);
 
     if (adjustedX < 0 || adjustedY < 0 || adjustedX > imageSize.width || adjustedY > imageSize.height) return;
 
@@ -308,7 +341,7 @@ export function StageBoard() {
     if (!drawing.isDrawing) return;
 
     // Adjust coordinates to be relative to the centered Group (with zoom)
-    const { x: adjustedX, y: adjustedY } = screenToImageCoords(pos.x, pos.y);
+    const { x: adjustedX, y: adjustedY } = screenToCanvasCoords(pos.x, pos.y);
 
     const clampedX = Math.max(0, Math.min(adjustedX, imageSize.width));
     const clampedY = Math.max(0, Math.min(adjustedY, imageSize.height));
@@ -340,46 +373,56 @@ export function StageBoard() {
     const isDrag = dragWidth > 5 || dragHeight > 5;
 
     if (isDrag) {
-      // Normal drag: create box from drag coordinates
-      const x = Math.min(drawing.startX, drawing.currentX);
-      const y = Math.min(drawing.startY, drawing.currentY);
-      const width = Math.abs(drawing.currentX - drawing.startX);
-      const height = Math.abs(drawing.currentY - drawing.startY);
+      // Normal drag: create box from drag coordinates (canvas space)
+      const canvasX = Math.min(drawing.startX, drawing.currentX);
+      const canvasY = Math.min(drawing.startY, drawing.currentY);
+      const canvasWidth = Math.abs(drawing.currentX - drawing.startX);
+      const canvasHeight = Math.abs(drawing.currentY - drawing.startY);
 
-      if (width > 5 && height > 5) {
+      if (canvasWidth > 5 && canvasHeight > 5) {
+        // Convert from canvas coordinates to original image coordinates
+        const originalCoords = canvasToOriginal(canvasX, canvasY, canvasWidth, canvasHeight);
+
         const newBox = {
           id: generateId(),
-          x,
-          y,
-          width,
-          height,
+          x: originalCoords.x,
+          y: originalCoords.y,
+          width: originalCoords.width,
+          height: originalCoords.height,
           charCount: 1,
           isNew: true,
         };
         addBox(newBox);
         setSelectedBoxId(newBox.id);
-        // Save dimensions for quick-click
-        setLastBoxSize({ width, height });
+        // Save dimensions in original coords for quick-click
+        setLastBoxSize({ width: originalCoords.width, height: originalCoords.height });
         // Force re-evaluation of selectedNode after ref is registered
         requestAnimationFrame(() => setNodeUpdateTrigger((n) => n + 1));
       }
     } else if (lastBoxSize) {
-      // Quick click: create box with last dimensions, centered on click point
-      const clickX = drawing.startX;
-      const clickY = drawing.startY;
+      // Quick click: create box with last dimensions (in original coords), centered on click point
+      const canvasClickX = drawing.startX;
+      const canvasClickY = drawing.startY;
 
-      // Center the box on the click point
-      let x = clickX - lastBoxSize.width / 2;
-      let y = clickY - lastBoxSize.height / 2;
+      // Convert click point to original coords
+      const scale = imageSize.scale || 1;
+      const origClickX = canvasClickX / scale;
+      const origClickY = canvasClickY / scale;
 
-      // Clamp to image bounds
-      x = Math.max(0, Math.min(x, imageSize.width - lastBoxSize.width));
-      y = Math.max(0, Math.min(y, imageSize.height - lastBoxSize.height));
+      // Center the box on the click point (all in original coords)
+      let origX = origClickX - lastBoxSize.width / 2;
+      let origY = origClickY - lastBoxSize.height / 2;
+
+      // Clamp to image bounds (using original image dimensions from currentImage)
+      const origImgWidth = currentImage?.width || imageSize.width / scale;
+      const origImgHeight = currentImage?.height || imageSize.height / scale;
+      origX = Math.max(0, Math.min(origX, origImgWidth - lastBoxSize.width));
+      origY = Math.max(0, Math.min(origY, origImgHeight - lastBoxSize.height));
 
       const newBox = {
         id: generateId(),
-        x,
-        y,
+        x: origX,
+        y: origY,
         width: lastBoxSize.width,
         height: lastBoxSize.height,
         charCount: 1,
@@ -434,28 +477,43 @@ export function StageBoard() {
 
   const handleBoxDragEnd = (boxId: string, e: Konva.KonvaEventObject<DragEvent>) => {
     const node = e.target;
-    updateBox(boxId, { x: node.x(), y: node.y() });
+    // Node position is in canvas coords, convert to original
+    const scale = imageSize.scale || 1;
+    updateBox(boxId, {
+      x: node.x() / scale,
+      y: node.y() / scale,
+    });
   };
 
   const handleBoxTransformEnd = (boxId: string, e: Konva.KonvaEventObject<Event>) => {
     const node = e.target as Konva.Rect;
-    const scaleX = node.scaleX();
-    const scaleY = node.scaleY();
+    const nodeScaleX = node.scaleX();
+    const nodeScaleY = node.scaleY();
     node.scaleX(1);
     node.scaleY(1);
 
-    const newWidth = Math.max(10, node.width() * scaleX);
-    const newHeight = Math.max(10, node.height() * scaleY);
+    // Node dimensions are in canvas coords after transform
+    const canvasWidth = Math.max(10, node.width() * nodeScaleX);
+    const canvasHeight = Math.max(10, node.height() * nodeScaleY);
+    const canvasX = node.x();
+    const canvasY = node.y();
+
+    // Convert to original coordinates
+    const scale = imageSize.scale || 1;
+    const origWidth = canvasWidth / scale;
+    const origHeight = canvasHeight / scale;
+    const origX = canvasX / scale;
+    const origY = canvasY / scale;
 
     updateBox(boxId, {
-      x: node.x(),
-      y: node.y(),
-      width: newWidth,
-      height: newHeight,
+      x: origX,
+      y: origY,
+      width: origWidth,
+      height: origHeight,
     });
 
-    // Update lastBoxSize so quick-click uses the edited dimensions
-    setLastBoxSize({ width: newWidth, height: newHeight });
+    // Update lastBoxSize in original coords
+    setLastBoxSize({ width: origWidth, height: origHeight });
   };
 
   const getPreviewBox = () => {
@@ -586,6 +644,13 @@ export function StageBoard() {
                 const isSelected = box.id === selectedBoxId;
                 const hasLabel = !!box.label;
 
+                // Convert from original image coordinates to canvas coordinates
+                const canvasCoords = originalToCanvas(box.x, box.y, box.width, box.height);
+                const cx = canvasCoords.x;
+                const cy = canvasCoords.y;
+                const cw = canvasCoords.width;
+                const ch = canvasCoords.height;
+
                 return (
                   <Group key={box.id}>
                     {/* Box Rectangle */}
@@ -597,10 +662,10 @@ export function StageBoard() {
                           boxRefs.current.delete(box.id);
                         }
                       }}
-                      x={box.x}
-                      y={box.y}
-                      width={box.width}
-                      height={box.height}
+                      x={cx}
+                      y={cy}
+                      width={cw}
+                      height={ch}
                       stroke={hasLabel ? COLORS.greenLight : COLORS.red}
                       strokeWidth={isSelected ? 2 : 1}
                       dash={hasLabel ? undefined : [6, 4]}
@@ -622,8 +687,8 @@ export function StageBoard() {
                       <>
                         {/* Label background */}
                         <Rect
-                          x={box.x}
-                          y={box.y + box.height + 2}
+                          x={cx}
+                          y={cy + ch + 2}
                           width={box.label.length * 10 + 8}
                           height={18}
                           fill={COLORS.black}
@@ -631,8 +696,8 @@ export function StageBoard() {
                           strokeWidth={1}
                         />
                         <Text
-                          x={box.x + 4}
-                          y={box.y + box.height + 5}
+                          x={cx + 4}
+                          y={cy + ch + 5}
                           text={box.label}
                           fontSize={12}
                           fontFamily="JetBrains Mono, monospace"
@@ -646,8 +711,8 @@ export function StageBoard() {
                     {box.charCount > 1 && (
                       <>
                         <Rect
-                          x={box.x + box.width - 20}
-                          y={box.y - 10}
+                          x={cx + cw - 20}
+                          y={cy - 10}
                           width={22}
                           height={18}
                           fill={COLORS.red}
@@ -655,8 +720,8 @@ export function StageBoard() {
                           strokeWidth={2}
                         />
                         <Text
-                          x={box.x + box.width - 14}
-                          y={box.y - 7}
+                          x={cx + cw - 14}
+                          y={cy - 7}
                           text={String(box.charCount)}
                           fontSize={11}
                           fontFamily="JetBrains Mono, monospace"
