@@ -246,6 +246,30 @@ body {
   }
 }
 
+/* Contenteditable highlight styles */
+.highlight-normal {
+  color: var(--keposhka-cream);
+}
+
+.highlight-invalid {
+  background-color: var(--keposhka-red);
+  color: var(--keposhka-white);
+  border-bottom: 2px solid var(--keposhka-white);
+}
+
+.highlight-unassigned {
+  background-color: rgb(245 158 11); /* amber-500 */
+  color: var(--keposhka-white);
+}
+
+/* Contenteditable placeholder */
+.editable-placeholder:empty::before {
+  content: attr(data-placeholder);
+  color: rgba(245, 240, 230, 0.4);
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
 /* Print styles - for exporting */
 @media print {
   body {

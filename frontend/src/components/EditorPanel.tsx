@@ -4,83 +4,153 @@
  * Left sidebar with file list and text input
  */
 
-import { memo, useRef, useCallback, useMemo, useEffect, useState } from 'react';
+import { memo, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useStore, type FilterStatus } from '@/store/useStore';
 
 /**
- * Renders text with highlighted characters - Regime styling
- * Invalid chars = red background (ERROR)
- * Unassigned chars = amber background (WARNING)
+ * Generates HTML content for contenteditable with highlighted characters
+ * Uses grouped spans (consecutive chars of same type) for proper text rendering
  */
-const HighlightedText = memo(function HighlightedText({
-  text,
-  invalidIndices,
-  unassignedIndices,
-  scrollTop,
-}: {
-  text: string;
-  invalidIndices: number[];
-  unassignedIndices: number[];
-  scrollTop: number;
-}) {
-  const invalidSet = useMemo(() => new Set(invalidIndices), [invalidIndices]);
-  const unassignedSet = useMemo(() => new Set(unassignedIndices), [unassignedIndices]);
+function generateHighlightedHTML(
+  text: string,
+  invalidIndices: number[],
+  unassignedIndices: number[]
+): string {
+  if (text.length === 0) return '';
 
-  const segments = useMemo(() => {
-    const result: { char: string; type: 'normal' | 'invalid' | 'unassigned' }[] = [];
-    for (let i = 0; i < text.length; i++) {
-      const char = text[i];
-      let type: 'normal' | 'invalid' | 'unassigned' = 'normal';
-      if (invalidSet.has(i)) {
-        type = 'invalid';
-      } else if (unassignedSet.has(i)) {
-        type = 'unassigned';
-      }
-      result.push({ char, type });
+  const invalidSet = new Set(invalidIndices);
+  const unassignedSet = new Set(unassignedIndices);
+
+  // Group consecutive characters of the same type
+  const groups: { text: string; type: 'normal' | 'invalid' | 'unassigned' }[] = [];
+  let currentType: 'normal' | 'invalid' | 'unassigned' = 'normal';
+  let currentText = '';
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    let charType: 'normal' | 'invalid' | 'unassigned' = 'normal';
+
+    if (invalidSet.has(i)) {
+      charType = 'invalid';
+    } else if (unassignedSet.has(i)) {
+      charType = 'unassigned';
     }
-    return result;
-  }, [text, invalidSet, unassignedSet]);
 
-  return (
-    <div
-      className="absolute top-0 left-0 right-0 bottom-0 overflow-hidden pointer-events-none border-2 border-transparent"
-      aria-hidden="true"
-    >
-      <div
-        className="px-3 py-2 text-sm whitespace-pre-wrap break-words font-mono"
-        style={{ transform: `translateY(-${scrollTop}px)` }}
-      >
-        {segments.map((segment, i) => {
-          if (segment.type === 'invalid') {
-            return (
-              <span
-                key={i}
-                className="bg-keposhka-red text-white border-b-2 border-white"
-              >
-                {segment.char}
-              </span>
-            );
-          }
-          if (segment.type === 'unassigned') {
-            return (
-              <span
-                key={i}
-                className="bg-amber-500 text-white"
-              >
-                {segment.char}
-              </span>
-            );
-          }
-          return (
-            <span key={i} className="text-white">
-              {segment.char}
-            </span>
-          );
-        })}
-      </div>
-    </div>
-  );
-});
+    if (charType === currentType) {
+      currentText += char;
+    } else {
+      if (currentText) {
+        groups.push({ text: currentText, type: currentType });
+      }
+      currentType = charType;
+      currentText = char;
+    }
+  }
+  if (currentText) {
+    groups.push({ text: currentText, type: currentType });
+  }
+
+  // Convert groups to HTML
+  return groups.map(group => {
+    // Escape HTML special chars and convert newlines/spaces for proper display
+    const escaped = group.text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n/g, '<br>');
+
+    switch (group.type) {
+      case 'invalid':
+        return `<span class="highlight-invalid">${escaped}</span>`;
+      case 'unassigned':
+        return `<span class="highlight-unassigned">${escaped}</span>`;
+      default:
+        return `<span class="highlight-normal">${escaped}</span>`;
+    }
+  }).join('');
+}
+
+/**
+ * Extracts plain text from contenteditable element, preserving newlines
+ */
+function getPlainTextFromElement(element: HTMLElement | DocumentFragment): string {
+  let text = '';
+
+  const processNode = (node: Node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      text += node.textContent || '';
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      const el = node as HTMLElement;
+      const tagName = el.tagName.toLowerCase();
+
+      // Handle line breaks
+      if (tagName === 'br') {
+        text += '\n';
+      } else if (tagName === 'div' || tagName === 'p') {
+        // Block elements: add newline before if we have content
+        if (text.length > 0 && !text.endsWith('\n')) {
+          text += '\n';
+        }
+        el.childNodes.forEach(processNode);
+      } else {
+        // Inline elements (spans, etc.)
+        el.childNodes.forEach(processNode);
+      }
+    }
+  };
+
+  element.childNodes.forEach(processNode);
+  return text;
+}
+
+/**
+ * Restores cursor position after content update
+ */
+function restoreCursorPosition(element: HTMLElement, offset: number): void {
+  const selection = window.getSelection();
+  if (!selection) return;
+
+  let currentOffset = 0;
+  let targetNode: Node | null = null;
+  let targetOffset = 0;
+
+  const findPosition = (node: Node): boolean => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const textLength = (node.textContent || '').length;
+      if (currentOffset + textLength >= offset) {
+        targetNode = node;
+        targetOffset = offset - currentOffset;
+        return true;
+      }
+      currentOffset += textLength;
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      const el = node as HTMLElement;
+      if (el.tagName.toLowerCase() === 'br') {
+        if (currentOffset === offset) {
+          targetNode = node;
+          targetOffset = 0;
+          return true;
+        }
+        currentOffset += 1;
+      } else {
+        for (const child of Array.from(el.childNodes)) {
+          if (findPosition(child)) return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  findPosition(element);
+
+  if (targetNode) {
+    const range = document.createRange();
+    range.setStart(targetNode, targetOffset);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+}
 
 // Filter button - Brutalist style
 const FilterButton = memo(function FilterButton({
@@ -119,10 +189,10 @@ const FilterButton = memo(function FilterButton({
 });
 
 export function EditorPanel() {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editableRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const [textareaScrollTop, setTextareaScrollTop] = useState(0);
+  const isComposingRef = useRef(false);
 
   const {
     inputText,
@@ -180,7 +250,11 @@ export function EditorPanel() {
         return;
       }
       const activeElement = document.activeElement;
-      if (activeElement?.tagName === 'TEXTAREA' || (activeElement?.tagName === 'INPUT' && (activeElement as HTMLInputElement).type === 'text')) {
+      const isInTextField =
+        activeElement?.tagName === 'TEXTAREA' ||
+        (activeElement?.tagName === 'INPUT' && (activeElement as HTMLInputElement).type === 'text') ||
+        (activeElement as HTMLElement)?.isContentEditable;
+      if (isInTextField) {
         return;
       }
       if (e.key === 'ArrowDown') {
@@ -202,10 +276,9 @@ export function EditorPanel() {
         currentButton.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
     }
-    // Reset textarea scroll when changing images
-    setTextareaScrollTop(0);
-    if (textareaRef.current) {
-      textareaRef.current.scrollTop = 0;
+    // Reset scroll when changing images
+    if (editableRef.current) {
+      editableRef.current.scrollTop = 0;
     }
   }, [currentImage]);
 
@@ -238,19 +311,88 @@ export function EditorPanel() {
     selectImage(image);
   };
 
-  const handleTextChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setInputText(e.target.value);
-    },
-    [setInputText]
-  );
+  const handleInput = useCallback(() => {
+    if (isComposingRef.current) return;
+    if (editableRef.current) {
+      const newText = getPlainTextFromElement(editableRef.current);
+      setInputText(newText);
+    }
+  }, [setInputText]);
 
-  const handleTextareaScroll = useCallback(
-    (e: React.UIEvent<HTMLTextAreaElement>) => {
-      setTextareaScrollTop(e.currentTarget.scrollTop);
-    },
-    []
-  );
+  const handleCompositionStart = useCallback(() => {
+    isComposingRef.current = true;
+  }, []);
+
+  const handleCompositionEnd = useCallback(() => {
+    isComposingRef.current = false;
+    handleInput();
+  }, [handleInput]);
+
+  // Sync contenteditable content when inputText changes externally (e.g., loading annotation)
+  useEffect(() => {
+    if (editableRef.current) {
+      // Get current text from the element
+      const currentText = getPlainTextFromElement(editableRef.current);
+      // Only update if text is different (to preserve cursor position when typing)
+      if (currentText !== inputText) {
+        // Save selection state
+        const selection = window.getSelection();
+        const hadFocus = document.activeElement === editableRef.current;
+
+        // Update HTML content
+        editableRef.current.innerHTML = generateHighlightedHTML(
+          inputText,
+          validation.invalidCharIndices,
+          validation.unassignedTextIndices
+        );
+
+        // Restore focus and move cursor to end if needed
+        if (hadFocus && selection) {
+          editableRef.current.focus();
+          // Move cursor to end
+          const range = document.createRange();
+          range.selectNodeContents(editableRef.current);
+          range.collapse(false);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      } else {
+        // Text is same, just update highlighting while preserving cursor
+        const selection = window.getSelection();
+        let cursorOffset = 0;
+
+        // Calculate cursor offset in plain text
+        if (selection && selection.rangeCount > 0 && editableRef.current.contains(selection.anchorNode)) {
+          const range = selection.getRangeAt(0);
+          const preCaretRange = range.cloneRange();
+          preCaretRange.selectNodeContents(editableRef.current);
+          preCaretRange.setEnd(range.startContainer, range.startOffset);
+          cursorOffset = getPlainTextFromElement(preCaretRange.cloneContents() as unknown as HTMLElement).length;
+        }
+
+        // Update HTML
+        editableRef.current.innerHTML = generateHighlightedHTML(
+          inputText,
+          validation.invalidCharIndices,
+          validation.unassignedTextIndices
+        );
+
+        // Restore cursor position
+        if (selection && document.activeElement === editableRef.current) {
+          try {
+            restoreCursorPosition(editableRef.current, cursorOffset);
+          } catch {
+            // If restoration fails, just move to end
+            const range = document.createRange();
+            range.selectNodeContents(editableRef.current);
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+        }
+      }
+    }
+  }, [inputText, validation.invalidCharIndices, validation.unassignedTextIndices]);
 
   const statusMessage = useMemo(() => {
     if (!currentImage) {
@@ -431,30 +573,26 @@ export function EditorPanel() {
           </div>
         </div>
 
-        {/* Textarea with overlay */}
+        {/* Editable text field with inline highlighting */}
         <div className="p-3">
           <div className="relative">
-            <HighlightedText
-              text={inputText}
-              invalidIndices={validation.invalidCharIndices}
-              unassignedIndices={validation.unassignedTextIndices}
-              scrollTop={textareaScrollTop}
-            />
-            <textarea
-              ref={textareaRef}
-              value={inputText}
-              onChange={handleTextChange}
-              onScroll={handleTextareaScroll}
-              placeholder="INGRESE TEXTO TRADUCIDO..."
+            <div
+              ref={editableRef}
+              contentEditable
+              onInput={handleInput}
+              onCompositionStart={handleCompositionStart}
+              onCompositionEnd={handleCompositionEnd}
+              data-placeholder="INGRESE TEXTO TRADUCIDO..."
+              spellCheck={false}
               className="
                 w-full h-28 px-3 py-2 text-sm font-mono
-                bg-transparent text-transparent caret-keposhka-red
+                bg-keposhka-black/50 text-keposhka-cream
                 border-2 border-keposhka-cream/30
                 focus:outline-none focus:border-keposhka-red
-                resize-none relative z-10 overflow-y-auto
-                placeholder:text-keposhka-cream/40 placeholder:uppercase
+                overflow-y-auto whitespace-pre-wrap break-words
+                editable-placeholder
               "
-              spellCheck={false}
+              style={{ caretColor: 'var(--keposhka-red)' }}
             />
           </div>
 
