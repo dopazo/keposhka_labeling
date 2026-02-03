@@ -24,11 +24,11 @@ const getKeposhkaChar = (label: string): string => {
 };
 
 export function ReferencePanel() {
-  const { inputText, setInputText } = useStore();
+  const { insertCharAtCursor } = useStore();
 
-  // Handler to append character to translation field
+  // Handler to insert character at cursor position in translation field
   const handleCharClick = (label: string) => {
-    setInputText(inputText + label);
+    insertCharAtCursor(label);
   };
 
   // Group characters - includes digraphs in correct order by ID

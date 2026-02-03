@@ -215,6 +215,8 @@ export function EditorPanel() {
     saveDraft,
     skipToNextPending,
     clearSaveResult,
+    setCursorPosition,
+    cursorPosition,
   } = useStore();
 
   const filteredImages = useMemo(() => {
@@ -328,7 +330,32 @@ export function EditorPanel() {
     handleInput();
   }, [handleInput]);
 
-  // Sync contenteditable content when inputText changes externally (e.g., loading annotation)
+  // Save cursor position when selection changes or on blur
+  const saveCursorPosition = useCallback(() => {
+    if (!editableRef.current) return;
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    if (!editableRef.current.contains(selection.anchorNode)) return;
+
+    const range = selection.getRangeAt(0);
+    const preCaretRange = range.cloneRange();
+    preCaretRange.selectNodeContents(editableRef.current);
+    preCaretRange.setEnd(range.startContainer, range.startOffset);
+    const cursorOffset = getPlainTextFromElement(preCaretRange.cloneContents() as unknown as HTMLElement).length;
+
+    setCursorPosition(cursorOffset);
+  }, [setCursorPosition]);
+
+  const handleBlur = useCallback(() => {
+    saveCursorPosition();
+  }, [saveCursorPosition]);
+
+  const handleSelect = useCallback(() => {
+    saveCursorPosition();
+  }, [saveCursorPosition]);
+
+  // Sync contenteditable content when inputText changes externally (e.g., loading annotation, reference panel)
   useEffect(() => {
     if (editableRef.current) {
       // Get current text from the element
@@ -346,7 +373,7 @@ export function EditorPanel() {
           validation.unassignedTextIndices
         );
 
-        // Restore focus and move cursor to end if needed
+        // Restore focus and cursor position
         if (hadFocus && selection) {
           editableRef.current.focus();
           // Move cursor to end
@@ -355,6 +382,19 @@ export function EditorPanel() {
           range.collapse(false);
           selection.removeAllRanges();
           selection.addRange(range);
+        } else if (cursorPosition !== null) {
+          // Text changed externally (e.g., from reference panel) - restore cursor to saved position
+          editableRef.current.focus();
+          try {
+            restoreCursorPosition(editableRef.current, cursorPosition);
+          } catch {
+            // If restoration fails, move to end
+            const range = document.createRange();
+            range.selectNodeContents(editableRef.current);
+            range.collapse(false);
+            window.getSelection()?.removeAllRanges();
+            window.getSelection()?.addRange(range);
+          }
         }
       } else {
         // Text is same, just update highlighting while preserving cursor
@@ -582,6 +622,8 @@ export function EditorPanel() {
               onInput={handleInput}
               onCompositionStart={handleCompositionStart}
               onCompositionEnd={handleCompositionEnd}
+              onBlur={handleBlur}
+              onSelect={handleSelect}
               data-placeholder="INGRESE TEXTO TRADUCIDO..."
               spellCheck={false}
               className="

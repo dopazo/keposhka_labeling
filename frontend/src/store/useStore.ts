@@ -35,6 +35,9 @@ interface AppState {
   validation: ValidationState;
   boxesVisible: boolean;
 
+  // Cursor position for text field (for inserting chars from reference panel)
+  cursorPosition: number | null;
+
   // Canvas scale (for converting canvas coords <-> image coords)
   canvasScale: number;
 
@@ -59,6 +62,10 @@ interface AppState {
   setCurrentImage: (image: ImageMeta | null) => void;
   setImages: (images: ImageMeta[]) => void;
   updateImageStatus: (filename: string, status: 'pending' | 'done') => void;
+
+  // Actions - Cursor position
+  setCursorPosition: (position: number | null) => void;
+  insertCharAtCursor: (char: string) => number; // Returns new cursor position
 
   // Phase 5: Actions - Filter & Search
   setFilterStatus: (status: FilterStatus) => void;
@@ -150,6 +157,9 @@ export const useStore = create<AppState>((set, get) => ({
   validation: initialValidation,
   boxesVisible: true,
 
+  // Cursor position (null = end of text)
+  cursorPosition: null,
+
   // Canvas scale (1 = no scaling, 0.5 = image shown at 50%)
   canvasScale: 1,
 
@@ -227,6 +237,32 @@ export const useStore = create<AppState>((set, get) => ({
         validation: result.validation,
       };
     }),
+
+  // Cursor position actions
+  setCursorPosition: (position) => set({ cursorPosition: position }),
+
+  insertCharAtCursor: (char) => {
+    const state = get();
+    const { inputText, cursorPosition } = state;
+
+    // If no cursor position saved, insert at end
+    const pos = cursorPosition ?? inputText.length;
+
+    // Insert character at position
+    const newText = inputText.slice(0, pos) + char + inputText.slice(pos);
+    const newCursorPosition = pos + char.length;
+
+    // Update text and cursor position
+    const result = recalculateState(state.boxes, newText);
+    set({
+      inputText: newText,
+      boxes: result.boxes,
+      validation: result.validation,
+      cursorPosition: newCursorPosition,
+    });
+
+    return newCursorPosition;
+  },
 
   setCurrentImage: (image) => set({ currentImage: image }),
 
