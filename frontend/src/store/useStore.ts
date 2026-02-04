@@ -5,7 +5,7 @@
  */
 import { create } from 'zustand';
 import type { BoundingBox, ImageMeta, AnnotationMetadata } from '@/lib/types';
-import { assignLabels } from '@/lib/sorter';
+import { assignLabels, predictCharCountForNewBox } from '@/lib/sorter';
 import { validateInput } from '@/lib/validator';
 import { validateSavePayload, validateDraftPayload } from '@/lib/schemas';
 
@@ -175,7 +175,14 @@ export const useStore = create<AppState>((set, get) => ({
   // Box Actions - All trigger recalculation
   addBox: (box) =>
     set((state) => {
-      const newBoxes = [...state.boxes, box];
+      // Auto-detect digraph: if charCount is 1 (default), check if next chars form a digraph
+      const predictedCharCount =
+        box.charCount === 1
+          ? predictCharCountForNewBox(state.boxes, box, state.inputText)
+          : box.charCount;
+
+      const newBox = { ...box, charCount: predictedCharCount };
+      const newBoxes = [...state.boxes, newBox];
       const result = recalculateState(newBoxes, state.inputText);
       return {
         boxes: result.boxes,

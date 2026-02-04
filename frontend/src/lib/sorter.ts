@@ -5,7 +5,7 @@
  * and assigns labels based on spatial ordering (left-to-right, top-to-bottom).
  */
 import type { BoundingBox } from '@/lib/types';
-import { isValidChar } from '@/lib/validator';
+import { isValidChar, isDigraph } from '@/lib/validator';
 
 /**
  * Result of the sorting and assignment process
@@ -250,4 +250,60 @@ export function recalculateLabels(
     boxes: result.boxes,
     isBalanced: result.isBalanced,
   };
+}
+
+/**
+ * Predict the optimal charCount for a new box based on its position
+ * and whether the next characters in the text form a digraph.
+ *
+ * @param existingBoxes - Currently existing boxes
+ * @param newBox - The new box being added (without charCount/label)
+ * @param text - The translated text
+ * @returns 2 if the next characters form a digraph, 1 otherwise
+ */
+export function predictCharCountForNewBox(
+  existingBoxes: BoundingBox[],
+  newBox: Omit<BoundingBox, 'charCount' | 'label'>,
+  text: string
+): number {
+  // Parse text into individual characters
+  const textChars = parseTextToChars(text);
+
+  // If no text, default to 1
+  if (textChars.length === 0) {
+    return 1;
+  }
+
+  // Create a temporary box with charCount=1 to determine its position
+  const tempBox: BoundingBox = { ...newBox, charCount: 1 } as BoundingBox;
+  const allBoxes = [...existingBoxes, tempBox];
+
+  // Group and order boxes spatially
+  const rows = groupBoxesIntoRows(allBoxes);
+  const orderedBoxes = flattenRows(rows);
+
+  // Find the position of the new box in the sorted order
+  const newBoxIndex = orderedBoxes.findIndex((b) => b.id === newBox.id);
+
+  // Calculate how many characters are consumed by boxes before this one
+  let charsConsumed = 0;
+  for (let i = 0; i < newBoxIndex; i++) {
+    charsConsumed += orderedBoxes[i].charCount;
+  }
+
+  // Check if there are enough characters for a potential digraph
+  const nextIndex = charsConsumed;
+  if (nextIndex >= textChars.length) {
+    return 1; // No more characters available
+  }
+
+  // Check if the next two characters form a digraph
+  if (nextIndex < textChars.length - 1) {
+    const twoChars = textChars[nextIndex].char + textChars[nextIndex + 1].char;
+    if (isDigraph(twoChars)) {
+      return 2;
+    }
+  }
+
+  return 1;
 }
