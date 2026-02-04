@@ -18,6 +18,7 @@ The script will:
 """
 
 import sys
+from collections import Counter
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -84,10 +85,10 @@ def parse_yolo_line(line: str) -> tuple[int, float, float, float, float] | None:
         return None
 
 
-def draw_boxes_on_image(image_path: Path, annotation_path: Path, output_path: Path) -> bool:
+def draw_boxes_on_image(image_path: Path, annotation_path: Path, output_path: Path) -> tuple:
     """
     Draw blue rectangles on the image based on YOLO annotations.
-    Returns True if successful, False otherwise.
+    Returns (success, box_count, class_ids_list).
     """
     try:
         # Open image
@@ -111,12 +112,14 @@ def draw_boxes_on_image(image_path: Path, annotation_path: Path, output_path: Pa
             lines = f.readlines()
 
         box_count = 0
+        class_ids = []
         for line in lines:
             parsed = parse_yolo_line(line)
             if parsed is None:
                 continue
 
             class_id, x_center_norm, y_center_norm, width_norm, height_norm = parsed
+            class_ids.append(class_id)
 
             # Convert normalized coordinates to pixel coordinates
             x_center = x_center_norm * img_width
@@ -147,11 +150,11 @@ def draw_boxes_on_image(image_path: Path, annotation_path: Path, output_path: Pa
         # Save the annotated image
         img.save(output_path, quality=95)
 
-        return True, box_count
+        return True, box_count, class_ids
 
     except Exception as e:
         print(f"  Error processing {image_path.name}: {e}")
-        return False, 0
+        return False, 0, []
 
 
 def main():
@@ -191,6 +194,7 @@ def main():
     success_count = 0
     error_count = 0
     total_boxes = 0
+    class_counter = Counter()
 
     for txt_path in sorted(txt_files):
         stem = txt_path.stem
@@ -207,12 +211,13 @@ def main():
         output_path = VALIDATED_DIR / f"{stem}_validated.png"
 
         # Draw boxes and save
-        success, box_count = draw_boxes_on_image(img_path, txt_path, output_path)
+        success, box_count, class_ids = draw_boxes_on_image(img_path, txt_path, output_path)
 
         if success:
             print(f"[OK]   {stem} - {box_count} boxes drawn")
             success_count += 1
             total_boxes += box_count
+            class_counter.update(class_ids)
         else:
             error_count += 1
 
@@ -224,7 +229,39 @@ def main():
     print(f"  Errors:    {error_count}")
     print(f"  Total boxes drawn: {total_boxes}")
     print(f"\nValidated images saved to: {VALIDATED_DIR}")
-    print("\nOpen the validated images to verify the bounding boxes are correct.")
+
+    # Class distribution
+    if class_counter:
+        print("\n" + "=" * 60)
+        print("Class Distribution")
+        print("=" * 60)
+
+        # Sort by frequency
+        sorted_classes = sorted(class_counter.items(), key=lambda x: x[1], reverse=True)
+
+        print(f"\nClasses with examples: {len(sorted_classes)} / {len(KEPOSHKA_ALPHABET)}")
+        print(f"Average instances per class: {total_boxes / len(sorted_classes):.1f}\n")
+
+        for class_id, count in sorted_classes:
+            label = class_id_to_label(class_id)
+            bar = "#" * min(count, 50)
+            print(f"  {label:4s}: {count:4d} {bar}")
+
+        # Missing classes
+        classes_with_data = set(class_counter.keys())
+        missing_count = len(KEPOSHKA_ALPHABET) - len(classes_with_data)
+
+        if missing_count > 0:
+            print(f"\n[!] Classes WITHOUT examples: {missing_count}")
+            missing_labels = [
+                class_id_to_label(i)
+                for i in range(len(KEPOSHKA_ALPHABET))
+                if i not in classes_with_data
+            ]
+            print(f"    {', '.join(missing_labels)}")
+
+    print("\n" + "=" * 60)
+    print("Open the validated images to verify the bounding boxes are correct.")
 
 
 if __name__ == "__main__":
