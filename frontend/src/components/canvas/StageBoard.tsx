@@ -111,6 +111,8 @@ export function StageBoard() {
   const boxesVisible = useStore((s) => s.boxesVisible);
   const toggleBoxesVisible = useStore((s) => s.toggleBoxesVisible);
   const setCanvasScale = useStore((s) => s.setCanvasScale);
+  const rowThresholdMultiplier = useStore((s) => s.rowThresholdMultiplier);
+  const setRowThresholdMultiplier = useStore((s) => s.setRowThresholdMultiplier);
 
   const boxRefs = useRef<Map<string, Konva.Rect>>(new Map());
 
@@ -830,8 +832,8 @@ export function StageBoard() {
         </div>
       </div>
 
-      {/* Top-left file indicator */}
-      <div className="absolute top-4 left-4 pointer-events-none">
+      {/* Top-left file indicator and line sensitivity */}
+      <div className="absolute top-4 left-4 flex flex-col gap-2">
         <div className="bg-keposhka-black/90 border-2 border-keposhka-red px-3 py-1.5 flex items-center gap-2">
           <span className="text-xs font-mono text-keposhka-cream uppercase tracking-wider">
             {currentImage.filename}
@@ -840,9 +842,58 @@ export function StageBoard() {
             [{currentImage.status === 'done' ? 'COMPLETO' : 'PENDIENTE'}]
           </span>
         </div>
+
+        {/* Line sensitivity slider */}
+        <div className="bg-keposhka-black/90 border-2 border-keposhka-steel px-3 py-2 w-44">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-mono text-keposhka-steel uppercase">
+              Tolerancia
+            </span>
+            <button
+              onClick={() => setRowThresholdMultiplier(1.0)}
+              className={`text-[10px] font-mono px-1 transition-colors ${
+                rowThresholdMultiplier === 1.0
+                  ? 'text-keposhka-cream'
+                  : 'text-keposhka-red hover:text-keposhka-cream cursor-pointer'
+              }`}
+              title="Resetear a 1.0x"
+            >
+              {rowThresholdMultiplier.toFixed(1)}x
+            </button>
+          </div>
+          <input
+            type="range"
+            min="0.3"
+            max="5"
+            step="0.1"
+            value={rowThresholdMultiplier}
+            onChange={(e) => setRowThresholdMultiplier(parseFloat(e.target.value))}
+            className="w-full h-2 bg-keposhka-steel rounded-none appearance-none cursor-pointer
+              [&::-webkit-slider-thumb]:appearance-none
+              [&::-webkit-slider-thumb]:w-3
+              [&::-webkit-slider-thumb]:h-4
+              [&::-webkit-slider-thumb]:bg-keposhka-red
+              [&::-webkit-slider-thumb]:border-2
+              [&::-webkit-slider-thumb]:border-keposhka-black
+              [&::-webkit-slider-thumb]:cursor-pointer
+              [&::-moz-range-thumb]:w-3
+              [&::-moz-range-thumb]:h-4
+              [&::-moz-range-thumb]:bg-keposhka-red
+              [&::-moz-range-thumb]:border-2
+              [&::-moz-range-thumb]:border-keposhka-black
+              [&::-moz-range-thumb]:cursor-pointer
+              [&::-moz-range-thumb]:rounded-none
+            "
+            title="Ajusta la sensibilidad para detectar líneas. Valores altos = más tolerante (ideal para texto en arco)"
+          />
+          <div className="flex justify-between text-[8px] font-mono text-keposhka-steel mt-0.5">
+            <span>SENSIBLE</span>
+            <span>TOLERANTE</span>
+          </div>
+        </div>
       </div>
 
-      {/* Box count indicator and visibility toggle */}
+      {/* Box count indicator, visibility toggle, and line sensitivity slider */}
       <div className="absolute top-4 right-4 flex flex-col gap-2">
         <div className="bg-keposhka-black/90 border-2 border-keposhka-steel px-3 py-1.5 pointer-events-none">
           <span className="text-xs font-mono text-keposhka-steel uppercase">
@@ -865,6 +916,47 @@ export function StageBoard() {
           <span>{boxesVisible ? '◩' : '◱'}</span>
           <span>{boxesVisible ? 'VISIBLE' : 'OCULTO'}</span>
         </button>
+
+        {/* Line sensitivity slider */}
+        <div className="bg-keposhka-black/90 border-2 border-keposhka-steel px-3 py-2">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-mono text-keposhka-steel uppercase">
+              Tolerancia líneas
+            </span>
+            <span className="text-[10px] font-mono text-keposhka-cream">
+              {rowThresholdMultiplier.toFixed(1)}x
+            </span>
+          </div>
+          <input
+            type="range"
+            min="0.3"
+            max="5"
+            step="0.1"
+            value={rowThresholdMultiplier}
+            onChange={(e) => setRowThresholdMultiplier(parseFloat(e.target.value))}
+            className="w-full h-2 bg-keposhka-steel rounded-none appearance-none cursor-pointer
+              [&::-webkit-slider-thumb]:appearance-none
+              [&::-webkit-slider-thumb]:w-3
+              [&::-webkit-slider-thumb]:h-4
+              [&::-webkit-slider-thumb]:bg-keposhka-red
+              [&::-webkit-slider-thumb]:border-2
+              [&::-webkit-slider-thumb]:border-keposhka-black
+              [&::-webkit-slider-thumb]:cursor-pointer
+              [&::-moz-range-thumb]:w-3
+              [&::-moz-range-thumb]:h-4
+              [&::-moz-range-thumb]:bg-keposhka-red
+              [&::-moz-range-thumb]:border-2
+              [&::-moz-range-thumb]:border-keposhka-black
+              [&::-moz-range-thumb]:cursor-pointer
+              [&::-moz-range-thumb]:rounded-none
+            "
+            title="Ajusta la sensibilidad para detectar líneas. Valores altos = más tolerante (ideal para texto en arco)"
+          />
+          <div className="flex justify-between text-[8px] font-mono text-keposhka-steel mt-0.5">
+            <span>SENSIBLE</span>
+            <span>TOLERANTE</span>
+          </div>
+        </div>
       </div>
 
       {/* Zoom controls */}

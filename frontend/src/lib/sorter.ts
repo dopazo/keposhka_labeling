@@ -59,16 +59,22 @@ export function parseTextToTokens(text: string): Array<{ char: string; index: nu
  * Boxes are considered in the same row if their Y-centers are within the threshold
  *
  * @param boxes - Array of bounding boxes
+ * @param thresholdMultiplier - Multiplier for row threshold (default 1.0 = 70% of avg height)
+ *                              Higher values = more tolerant (fewer rows, good for arcs)
+ *                              Lower values = more sensitive (more rows)
  * @returns Array of rows, each containing boxes sorted left-to-right
  */
-export function groupBoxesIntoRows(boxes: BoundingBox[]): BoundingBox[][] {
+export function groupBoxesIntoRows(boxes: BoundingBox[], thresholdMultiplier: number = 1.0): BoundingBox[][] {
   if (boxes.length === 0) return [];
 
   // Calculate average box height for dynamic threshold
   const avgHeight = boxes.reduce((sum, box) => sum + box.height, 0) / boxes.length;
 
-  // Dynamic threshold: ~70% of average box height (tolerant of slight line inclination)
-  const rowThreshold = avgHeight * 0.7;
+  // Dynamic threshold: ~70% of average box height * multiplier
+  // At multiplier 1.0: 70% (default, tolerant of slight inclination)
+  // At multiplier 0.5: 35% (more sensitive, detects smaller Y differences as new rows)
+  // At multiplier 3.0: 210% (very tolerant, good for arcs - most boxes in same row)
+  const rowThreshold = avgHeight * 0.7 * thresholdMultiplier;
 
   // Sort boxes by Y position first (top to bottom)
   const sortedByY = [...boxes].sort((a, b) => {
@@ -138,9 +144,10 @@ function isValidKeposhkaChar(char: string): boolean {
  *
  * @param boxes - Array of bounding boxes with charCount
  * @param text - Translated text (may be multiline)
+ * @param thresholdMultiplier - Multiplier for row detection threshold (default 1.0)
  * @returns SortResult with assigned labels and validation info
  */
-export function assignLabels(boxes: BoundingBox[], text: string): SortResult {
+export function assignLabels(boxes: BoundingBox[], text: string, thresholdMultiplier: number = 1.0): SortResult {
   // Parse text into individual characters (not auto-detecting digraphs)
   const textChars = parseTextToChars(text);
 
@@ -149,7 +156,7 @@ export function assignLabels(boxes: BoundingBox[], text: string): SortResult {
   const textCharCount = textChars.length;
 
   // Group and order boxes spatially
-  const rows = groupBoxesIntoRows(boxes);
+  const rows = groupBoxesIntoRows(boxes, thresholdMultiplier);
   const orderedBoxes = flattenRows(rows);
 
   // Assign labels to boxes
@@ -259,12 +266,14 @@ export function recalculateLabels(
  * @param existingBoxes - Currently existing boxes
  * @param newBox - The new box being added (without charCount/label)
  * @param text - The translated text
+ * @param thresholdMultiplier - Multiplier for row detection threshold (default 1.0)
  * @returns 2 if the next characters form a digraph, 1 otherwise
  */
 export function predictCharCountForNewBox(
   existingBoxes: BoundingBox[],
   newBox: Omit<BoundingBox, 'charCount' | 'label'>,
-  text: string
+  text: string,
+  thresholdMultiplier: number = 1.0
 ): number {
   // Parse text into individual characters
   const textChars = parseTextToChars(text);
@@ -279,7 +288,7 @@ export function predictCharCountForNewBox(
   const allBoxes = [...existingBoxes, tempBox];
 
   // Group and order boxes spatially
-  const rows = groupBoxesIntoRows(allBoxes);
+  const rows = groupBoxesIntoRows(allBoxes, thresholdMultiplier);
   const orderedBoxes = flattenRows(rows);
 
   // Find the position of the new box in the sorted order

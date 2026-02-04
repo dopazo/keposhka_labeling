@@ -41,6 +41,11 @@ interface AppState {
   // Canvas scale (for converting canvas coords <-> image coords)
   canvasScale: number;
 
+  // Row threshold multiplier for line detection sensitivity
+  // 1.0 = default (70% of avg box height)
+  // Lower = more sensitive (more rows), Higher = more tolerant (fewer rows, good for arcs)
+  rowThresholdMultiplier: number;
+
   // Phase 5: Filter & Search State
   filterStatus: FilterStatus;
   searchQuery: string;
@@ -96,14 +101,17 @@ interface AppState {
 
   // Actions - Canvas Scale
   setCanvasScale: (scale: number) => void;
+
+  // Actions - Row Threshold
+  setRowThresholdMultiplier: (multiplier: number) => void;
 }
 
 // Helper function to recalculate labels and validation
-function recalculateState(boxes: BoundingBox[], text: string): {
+function recalculateState(boxes: BoundingBox[], text: string, thresholdMultiplier: number = 1.0): {
   boxes: BoundingBox[];
   validation: ValidationState;
 } {
-  const sortResult = assignLabels(boxes, text);
+  const sortResult = assignLabels(boxes, text, thresholdMultiplier);
   const inputValidation = validateInput(text);
 
   return {
@@ -163,6 +171,9 @@ export const useStore = create<AppState>((set, get) => ({
   // Canvas scale (1 = no scaling, 0.5 = image shown at 50%)
   canvasScale: 1,
 
+  // Row threshold multiplier (1.0 = default, higher = more tolerant for arcs)
+  rowThresholdMultiplier: 1.0,
+
   // Phase 5: Filter & Search State
   filterStatus: 'all',
   searchQuery: '',
@@ -178,12 +189,12 @@ export const useStore = create<AppState>((set, get) => ({
       // Auto-detect digraph: if charCount is 1 (default), check if next chars form a digraph
       const predictedCharCount =
         box.charCount === 1
-          ? predictCharCountForNewBox(state.boxes, box, state.inputText)
+          ? predictCharCountForNewBox(state.boxes, box, state.inputText, state.rowThresholdMultiplier)
           : box.charCount;
 
       const newBox = { ...box, charCount: predictedCharCount };
       const newBoxes = [...state.boxes, newBox];
-      const result = recalculateState(newBoxes, state.inputText);
+      const result = recalculateState(newBoxes, state.inputText, state.rowThresholdMultiplier);
       return {
         boxes: result.boxes,
         validation: result.validation,
@@ -195,7 +206,7 @@ export const useStore = create<AppState>((set, get) => ({
       const newBoxes = state.boxes.map((box) =>
         box.id === id ? { ...box, ...updates } : box
       );
-      const result = recalculateState(newBoxes, state.inputText);
+      const result = recalculateState(newBoxes, state.inputText, state.rowThresholdMultiplier);
       return {
         boxes: result.boxes,
         validation: result.validation,
@@ -205,7 +216,7 @@ export const useStore = create<AppState>((set, get) => ({
   deleteBox: (id) =>
     set((state) => {
       const newBoxes = state.boxes.filter((box) => box.id !== id);
-      const result = recalculateState(newBoxes, state.inputText);
+      const result = recalculateState(newBoxes, state.inputText, state.rowThresholdMultiplier);
       return {
         boxes: result.boxes,
         validation: result.validation,
@@ -215,7 +226,7 @@ export const useStore = create<AppState>((set, get) => ({
 
   setBoxes: (boxes) =>
     set((state) => {
-      const result = recalculateState(boxes, state.inputText);
+      const result = recalculateState(boxes, state.inputText, state.rowThresholdMultiplier);
       return {
         boxes: result.boxes,
         validation: result.validation,
@@ -227,7 +238,7 @@ export const useStore = create<AppState>((set, get) => ({
       const newBoxes = state.boxes.map((box) =>
         box.id === id ? { ...box, charCount } : box
       );
-      const result = recalculateState(newBoxes, state.inputText);
+      const result = recalculateState(newBoxes, state.inputText, state.rowThresholdMultiplier);
       return {
         boxes: result.boxes,
         validation: result.validation,
@@ -237,7 +248,7 @@ export const useStore = create<AppState>((set, get) => ({
   // Text Actions - Triggers recalculation
   setInputText: (text) =>
     set((state) => {
-      const result = recalculateState(state.boxes, text);
+      const result = recalculateState(state.boxes, text, state.rowThresholdMultiplier);
       return {
         inputText: text,
         boxes: result.boxes,
@@ -250,7 +261,7 @@ export const useStore = create<AppState>((set, get) => ({
 
   insertCharAtCursor: (char) => {
     const state = get();
-    const { inputText, cursorPosition } = state;
+    const { inputText, cursorPosition, rowThresholdMultiplier } = state;
 
     // If no cursor position saved, insert at end
     const pos = cursorPosition ?? inputText.length;
@@ -260,7 +271,7 @@ export const useStore = create<AppState>((set, get) => ({
     const newCursorPosition = pos + char.length;
 
     // Update text and cursor position
-    const result = recalculateState(state.boxes, newText);
+    const result = recalculateState(state.boxes, newText, rowThresholdMultiplier);
     set({
       inputText: newText,
       boxes: result.boxes,
@@ -303,7 +314,8 @@ export const useStore = create<AppState>((set, get) => ({
           charCount: box.charCount,
           label: box.label,
         }));
-        const result = recalculateState(boxes, data.translatedText);
+        const { rowThresholdMultiplier } = get();
+        const result = recalculateState(boxes, data.translatedText, rowThresholdMultiplier);
         set({
           boxes: result.boxes,
           inputText: data.translatedText,
@@ -609,7 +621,7 @@ export const useStore = create<AppState>((set, get) => ({
   // Manual recalculation (if needed)
   recalculate: () =>
     set((state) => {
-      const result = recalculateState(state.boxes, state.inputText);
+      const result = recalculateState(state.boxes, state.inputText, state.rowThresholdMultiplier);
       return {
         boxes: result.boxes,
         validation: result.validation,
@@ -618,4 +630,15 @@ export const useStore = create<AppState>((set, get) => ({
 
   // Canvas scale management
   setCanvasScale: (scale) => set({ canvasScale: scale }),
+
+  // Row threshold multiplier management
+  setRowThresholdMultiplier: (multiplier) =>
+    set((state) => {
+      const result = recalculateState(state.boxes, state.inputText, multiplier);
+      return {
+        rowThresholdMultiplier: multiplier,
+        boxes: result.boxes,
+        validation: result.validation,
+      };
+    }),
 }));
