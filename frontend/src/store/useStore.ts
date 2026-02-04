@@ -5,7 +5,7 @@
  */
 import { create } from 'zustand';
 import type { BoundingBox, ImageMeta, AnnotationMetadata } from '@/lib/types';
-import { assignLabels, predictCharCountForNewBox } from '@/lib/sorter';
+import { assignLabels, predictCharCountForNewBox, repredictDigraphsForBoxes } from '@/lib/sorter';
 import { validateInput } from '@/lib/validator';
 import { validateSavePayload, validateDraftPayload } from '@/lib/schemas';
 
@@ -270,8 +270,16 @@ export const useStore = create<AppState>((set, get) => ({
     const newText = inputText.slice(0, pos) + char + inputText.slice(pos);
     const newCursorPosition = pos + char.length;
 
+    // Re-predict digraphs for existing boxes based on updated text
+    // This handles the case where a digraph is inserted from the reference panel
+    const boxesWithPredictedDigraphs = repredictDigraphsForBoxes(
+      state.boxes,
+      newText,
+      rowThresholdMultiplier
+    );
+
     // Update text and cursor position
-    const result = recalculateState(state.boxes, newText, rowThresholdMultiplier);
+    const result = recalculateState(boxesWithPredictedDigraphs, newText, rowThresholdMultiplier);
     set({
       inputText: newText,
       boxes: result.boxes,

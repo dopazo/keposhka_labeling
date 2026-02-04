@@ -316,3 +316,70 @@ export function predictCharCountForNewBox(
 
   return 1;
 }
+
+/**
+ * Re-predict charCount for all boxes with charCount=1 based on updated text.
+ * This is called when text is inserted (e.g., from reference panel) to detect
+ * digraphs that should be assigned to existing boxes.
+ *
+ * Only updates boxes that have charCount=1 (default/single char) - boxes that
+ * were manually set to 2 or 3 are preserved.
+ *
+ * @param boxes - Current boxes
+ * @param text - The translated text
+ * @param thresholdMultiplier - Multiplier for row detection threshold
+ * @returns Updated boxes with predicted charCounts
+ */
+export function repredictDigraphsForBoxes(
+  boxes: BoundingBox[],
+  text: string,
+  thresholdMultiplier: number = 1.0
+): BoundingBox[] {
+  if (boxes.length === 0) return boxes;
+
+  // Parse text into individual characters
+  const textChars = parseTextToChars(text);
+
+  if (textChars.length === 0) return boxes;
+
+  // Group and order boxes spatially
+  const rows = groupBoxesIntoRows(boxes, thresholdMultiplier);
+  const orderedBoxes = flattenRows(rows);
+
+  // Map to track updated charCounts by box ID
+  const updatedCharCounts = new Map<string, number>();
+
+  // Walk through ordered boxes and predict charCount for each
+  let charIndex = 0;
+  for (const box of orderedBoxes) {
+    // Only re-predict for boxes with charCount=1 (not manually set to 2+)
+    if (box.charCount === 1) {
+      // Check if the next two characters form a digraph
+      if (charIndex < textChars.length - 1) {
+        const twoChars = textChars[charIndex].char + textChars[charIndex + 1].char;
+        if (isDigraph(twoChars)) {
+          updatedCharCounts.set(box.id, 2);
+          charIndex += 2;
+          continue;
+        }
+      }
+      // Not a digraph, consume 1 char
+      charIndex += 1;
+    } else {
+      // Box has charCount > 1 (manually set), preserve it
+      charIndex += box.charCount;
+    }
+  }
+
+  // If no updates needed, return original boxes
+  if (updatedCharCounts.size === 0) return boxes;
+
+  // Apply updates to boxes (preserving original order)
+  return boxes.map((box) => {
+    const newCharCount = updatedCharCounts.get(box.id);
+    if (newCharCount !== undefined) {
+      return { ...box, charCount: newCharCount };
+    }
+    return box;
+  });
+}
