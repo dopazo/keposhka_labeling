@@ -54,15 +54,15 @@ export function ReferencePanel() {
               <span className="font-display text-keposhka-cream text-sm">⌨</span>
             </div>
             <div>
-              <h2 className="text-lg tracking-[0.2em] leading-none">REFERENCIA</h2>
+              <h2 className="text-lg tracking-[0.2em] leading-none">REFERENCE</h2>
               <p className="text-[10px] tracking-[0.2em] text-keposhka-cream/60 mt-0.5">
-                MAPEO TECLADO → KEPOSHKA
+                KEYBOARD → KEPOSHKA MAPPING
               </p>
             </div>
           </div>
           {/* Classification badge */}
           <div className="px-2 py-1 bg-keposhka-black border border-keposhka-cream/30 text-[8px] font-mono tracking-wider">
-            70 CLASES
+            70 CLASSES
           </div>
         </div>
         <div className="absolute inset-0 bg-diagonal-stripes opacity-30" />
@@ -74,7 +74,7 @@ export function ReferencePanel() {
         <section>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xs font-heading uppercase tracking-[0.15em] text-keposhka-red">
-              MAYÚSCULAS
+              UPPERCASE
             </span>
             <div className="h-px flex-1 bg-keposhka-steel" />
             <span className="text-[10px] font-mono text-keposhka-steel">[A-Z]</span>
@@ -113,7 +113,7 @@ export function ReferencePanel() {
         <section>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xs font-heading uppercase tracking-[0.15em] text-keposhka-red">
-              MINÚSCULAS
+              LOWERCASE
             </span>
             <div className="h-px flex-1 bg-keposhka-steel" />
             <span className="text-[10px] font-mono text-keposhka-steel">[a-z]</span>
@@ -152,7 +152,7 @@ export function ReferencePanel() {
         <section>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xs font-heading uppercase tracking-[0.15em] text-keposhka-red">
-              NÚMEROS
+              NUMBERS
             </span>
             <div className="h-px flex-1 bg-keposhka-steel" />
             <span className="text-[10px] font-mono text-keposhka-steel">[0-9]</span>
@@ -191,7 +191,7 @@ export function ReferencePanel() {
       <div className="p-3 border-t-2 border-keposhka-steel bg-keposhka-black/50">
         <div className="flex items-center justify-between text-[10px] font-mono uppercase">
           <span className="text-keposhka-steel">
-            CLASIFICACIÓN: PÚBLICO
+            CLASSIFICATION: PUBLIC
           </span>
           <span className="text-keposhka-red">
             DRAAG CULTURAL DEPT.

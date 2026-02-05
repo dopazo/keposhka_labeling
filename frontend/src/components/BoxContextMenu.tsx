@@ -48,8 +48,8 @@ export const BoxContextMenu = memo(function BoxContextMenu({
   }, [onClose]);
 
   const options = [
-    { value: 1, label: '1 CARÁCTER', description: 'LETRA SIMPLE', code: 'A, b, 5...' },
-    { value: 2, label: '2 CARACTERES', description: 'DÍGRAFO', code: 'CH, sh, TH...' },
+    { value: 1, label: '1 CHARACTER', description: 'SINGLE LETTER', code: 'A, b, 5...' },
+    { value: 2, label: '2 CHARACTERS', description: 'DIGRAPH', code: 'CH, sh, TH...' },
   ];
 
   return (
@@ -66,7 +66,7 @@ export const BoxContextMenu = memo(function BoxContextMenu({
         {/* Header - Regime style */}
         <div className="px-3 py-2 bg-keposhka-red border-b-2 border-keposhka-black">
           <span className="text-xs font-display uppercase tracking-[0.15em] text-keposhka-white">
-            CLASIFICACIÓN DE SECTOR
+            BOX CLASSIFICATION
           </span>
         </div>
 
@@ -113,7 +113,7 @@ export const BoxContextMenu = memo(function BoxContextMenu({
         {/* Footer hint */}
         <div className="px-3 py-2 bg-keposhka-steel/30 border-t border-keposhka-steel">
           <span className="text-[9px] font-mono text-keposhka-steel uppercase">
-            ESC para cerrar // Click fuera para cancelar
+            ESC to close // Click outside to cancel
           </span>
         </div>
       </div>

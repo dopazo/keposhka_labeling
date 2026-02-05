@@ -575,13 +575,13 @@ export function StageBoard() {
           <div className="mb-6">
             <div className="w-24 h-1 mx-auto bg-keposhka-red mb-4" />
             <h3 className="text-2xl font-display uppercase tracking-[0.3em] text-keposhka-cream mb-2">
-              SELECCIONA ARCHIVO
+              SELECT FILE
             </h3>
             <div className="w-24 h-1 mx-auto bg-keposhka-red" />
           </div>
 
           <p className="text-sm font-mono text-keposhka-steel uppercase">
-            Usa el panel izquierdo para comenzar
+            Use the left panel to start
           </p>
         </div>
       </div>
@@ -797,37 +797,37 @@ export function StageBoard() {
             <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
               DRAG
             </kbd>
-            Dibujar
+            Draw
           </span>
           <span className="text-[11px] font-mono text-keposhka-cream uppercase">
             <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
               CLICK
             </kbd>
-            Repetir
+            Repeat
           </span>
           <span className="text-[11px] font-mono text-keposhka-cream uppercase">
             <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
               DEL
             </kbd>
-            Eliminar
+            Delete
           </span>
           <span className="text-[11px] font-mono text-keposhka-cream uppercase">
             <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
               ESC
             </kbd>
-            Deseleccionar
+            Deselect
           </span>
           <span className="text-[11px] font-mono text-keposhka-cream uppercase">
             <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
               R-CLICK
             </kbd>
-            Dígrafo
+            Digraph
           </span>
           <span className="text-[11px] font-mono text-keposhka-cream uppercase">
             <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
               CTRL+DRAG
             </kbd>
-            Mover
+            Move
           </span>
         </div>
       </div>
@@ -839,7 +839,7 @@ export function StageBoard() {
             {currentImage.filename}
           </span>
           <span className={`text-xs font-bold ${currentImage.status === 'done' ? 'text-green-500' : 'text-keposhka-steel'}`}>
-            [{currentImage.status === 'done' ? 'COMPLETO' : 'PENDIENTE'}]
+            [{currentImage.status === 'done' ? 'DONE' : 'PENDING'}]
           </span>
         </div>
 
@@ -847,7 +847,7 @@ export function StageBoard() {
         <div className="bg-keposhka-black/90 border-2 border-keposhka-steel px-3 py-2 w-44">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] font-mono text-keposhka-cream/70 uppercase">
-              Tolerancia
+              Tolerance
             </span>
             <button
               onClick={() => setRowThresholdMultiplier(1.0)}
@@ -856,7 +856,7 @@ export function StageBoard() {
                   ? 'text-keposhka-cream'
                   : 'text-keposhka-red hover:text-keposhka-cream cursor-pointer'
               }`}
-              title="Resetear a 1.0x"
+              title="Reset to 1.0x"
             >
               {rowThresholdMultiplier.toFixed(1)}x
             </button>
@@ -884,11 +884,11 @@ export function StageBoard() {
               [&::-moz-range-thumb]:cursor-pointer
               [&::-moz-range-thumb]:rounded-none
             "
-            title="Ajusta la sensibilidad para detectar líneas. Valores altos = más tolerante (ideal para texto en arco)"
+            title="Adjust sensitivity for line detection. High values = more tolerant (ideal for arc text)"
           />
           <div className="flex justify-between text-[8px] font-mono text-keposhka-cream/50 mt-0.5">
-            <span>SENSIBLE</span>
-            <span>TOLERANTE</span>
+            <span>SENSITIVE</span>
+            <span>TOLERANT</span>
           </div>
         </div>
       </div>
@@ -897,7 +897,7 @@ export function StageBoard() {
       <div className="absolute top-4 right-4 flex flex-col gap-2">
         <div className="bg-keposhka-black/90 border-2 border-keposhka-steel px-3 py-1.5 pointer-events-none">
           <span className="text-xs font-mono text-keposhka-cream/70 uppercase">
-            SECTORES: <span className="text-keposhka-cream font-bold">{boxes.length}</span>
+            BOXES: <span className="text-keposhka-cream font-bold">{boxes.length}</span>
           </span>
         </div>
         <button
@@ -911,10 +911,10 @@ export function StageBoard() {
               : 'bg-keposhka-black/90 border-keposhka-red text-keposhka-red hover:bg-keposhka-red/20'
             }
           `}
-          title={boxesVisible ? 'Ocultar rectángulos (V)' : 'Mostrar rectángulos (V)'}
+          title={boxesVisible ? 'Hide boxes (V)' : 'Show boxes (V)'}
         >
           <span>{boxesVisible ? '◩' : '◱'}</span>
-          <span>{boxesVisible ? 'VISIBLE' : 'OCULTO'}</span>
+          <span>{boxesVisible ? 'VISIBLE' : 'HIDDEN'}</span>
         </button>
       </div>
 

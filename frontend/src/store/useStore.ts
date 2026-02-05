@@ -409,19 +409,19 @@ export const useStore = create<AppState>((set, get) => ({
 
     // Validate we have what we need
     if (!state.currentImage) {
-      const result = { success: false, message: 'No hay imagen seleccionada' };
+      const result = { success: false, message: 'No image selected' };
       set({ lastSaveResult: result });
       return result;
     }
 
     if (state.boxes.length === 0) {
-      const result = { success: false, message: 'No hay cajas dibujadas' };
+      const result = { success: false, message: 'No boxes drawn' };
       set({ lastSaveResult: result });
       return result;
     }
 
     if (!state.validation.isBalanced || state.validation.invalidCharIndices.length > 0) {
-      const result = { success: false, message: 'La anotación no está balanceada o hay caracteres inválidos' };
+      const result = { success: false, message: 'Annotation is not balanced or contains invalid characters' };
       set({ lastSaveResult: result });
       return result;
     }
@@ -448,7 +448,7 @@ export const useStore = create<AppState>((set, get) => ({
     // Phase 7: Validate payload with Zod
     const validation = validateSavePayload(payload);
     if (!validation.success) {
-      const result = { success: false, message: `Error de validación: ${validation.error}` };
+      const result = { success: false, message: `Validation error: ${validation.error}` };
       set({ lastSaveResult: result });
       return result;
     }
@@ -475,21 +475,21 @@ export const useStore = create<AppState>((set, get) => ({
             ? { ...state.currentImage, status: 'done' as const }
             : null,
           isSaving: false,
-          lastSaveResult: { success: true, message: 'Guardado exitosamente' },
+          lastSaveResult: { success: true, message: 'Saved successfully' },
         }));
 
         // Navigate to next pending image
         get().skipToNextPending();
 
-        return { success: true, message: 'Guardado exitosamente' };
+        return { success: true, message: 'Saved successfully' };
       } else {
-        const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
-        const result = { success: false, message: errorData.detail || 'Error al guardar' };
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        const result = { success: false, message: errorData.detail || 'Save error' };
         set({ isSaving: false, lastSaveResult: result });
         return result;
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error de conexión';
+      const errorMessage = error instanceof Error ? error.message : 'Connection error';
       const result = { success: false, message: errorMessage };
       set({ isSaving: false, lastSaveResult: result });
       return result;
@@ -501,7 +501,7 @@ export const useStore = create<AppState>((set, get) => ({
 
     // Validate we have an image
     if (!state.currentImage) {
-      const result = { success: false, message: 'No hay imagen seleccionada' };
+      const result = { success: false, message: 'No image selected' };
       set({ lastSaveResult: result });
       return result;
     }
@@ -509,7 +509,7 @@ export const useStore = create<AppState>((set, get) => ({
     // For drafts, we allow empty boxes and unbalanced state
     // Just need something to save (text or boxes)
     if (state.boxes.length === 0 && state.inputText.trim() === '') {
-      const result = { success: false, message: 'No hay nada que guardar' };
+      const result = { success: false, message: 'Nothing to save' };
       set({ lastSaveResult: result });
       return result;
     }
@@ -536,7 +536,7 @@ export const useStore = create<AppState>((set, get) => ({
     // Validate payload with Zod (draft schema)
     const validation = validateDraftPayload(payload);
     if (!validation.success) {
-      const result = { success: false, message: `Error de validación: ${validation.error}` };
+      const result = { success: false, message: `Validation error: ${validation.error}` };
       set({ lastSaveResult: result });
       return result;
     }
@@ -563,21 +563,21 @@ export const useStore = create<AppState>((set, get) => ({
             ? { ...state.currentImage, status: 'pending' as const }
             : null,
           isSaving: false,
-          lastSaveResult: { success: true, message: 'Borrador guardado' },
+          lastSaveResult: { success: true, message: 'Draft saved' },
         }));
 
         // Navigate to next pending image
         get().skipToNextPending();
 
-        return { success: true, message: 'Borrador guardado' };
+        return { success: true, message: 'Draft saved' };
       } else {
-        const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
-        const result = { success: false, message: errorData.detail || 'Error al guardar' };
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        const result = { success: false, message: errorData.detail || 'Save error' };
         set({ isSaving: false, lastSaveResult: result });
         return result;
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error de conexión';
+      const errorMessage = error instanceof Error ? error.message : 'Connection error';
       const result = { success: false, message: errorMessage };
       set({ isSaving: false, lastSaveResult: result });
       return result;

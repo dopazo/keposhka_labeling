@@ -436,14 +436,14 @@ export function EditorPanel() {
 
   const statusMessage = useMemo(() => {
     if (!currentImage) {
-      return { text: 'SELECCIONA ARCHIVO', color: 'text-keposhka-steel', icon: '>' };
+      return { text: 'SELECT FILE', color: 'text-keposhka-steel', icon: '>' };
     }
     if (boxes.length === 0) {
-      return { text: 'DIBUJA SECTORES', color: 'text-keposhka-steel', icon: '□' };
+      return { text: 'DRAW BOXES', color: 'text-keposhka-steel', icon: '□' };
     }
     if (validation.invalidCharIndices.length > 0) {
       return {
-        text: `ERROR: ${validation.invalidCharIndices.length} CARACTER(ES) PROHIBIDO(S)`,
+        text: `ERROR: ${validation.invalidCharIndices.length} INVALID CHARACTER(S)`,
         color: 'text-keposhka-red',
         icon: '!',
       };
@@ -451,12 +451,12 @@ export function EditorPanel() {
     if (!validation.isBalanced) {
       const diff = validation.textCharCount - validation.boxCharCount;
       if (diff > 0) {
-        return { text: `EXCESO: +${diff} CARACTERES`, color: 'text-amber-500', icon: '+' };
+        return { text: `EXCESS: +${diff} CHARACTERS`, color: 'text-amber-500', icon: '+' };
       } else {
-        return { text: `DEFICIT: ${Math.abs(diff)} CARACTERES`, color: 'text-amber-500', icon: '-' };
+        return { text: `DEFICIT: ${Math.abs(diff)} CHARACTERS`, color: 'text-amber-500', icon: '-' };
       }
     }
-    return { text: 'AUTORIZADO PARA ARCHIVO', color: 'text-green-500', icon: '✓' };
+    return { text: 'READY TO SAVE', color: 'text-green-500', icon: '✓' };
   }, [currentImage, boxes.length, validation]);
 
   return (
@@ -466,7 +466,7 @@ export function EditorPanel() {
         <div className="relative z-10">
           <h1 className="text-xl tracking-[0.25em] leading-none">KEPOSHKA</h1>
           <p className="text-[10px] tracking-[0.3em] text-keposhka-cream/60 mt-0.5">
-            SISTEMA DE ETIQUETADO // DRAAG
+            LABELING SYSTEM // DRAAG
           </p>
         </div>
         {/* Diagonal stripes overlay */}
@@ -481,7 +481,7 @@ export function EditorPanel() {
           <div className="flex items-center gap-2">
             <div className="h-px flex-1 bg-keposhka-cream/30" />
             <span className="text-[10px] font-heading uppercase tracking-[0.2em] text-keposhka-cream/80">
-              ARCHIVOS DE IMAGEN
+              IMAGE FILES
             </span>
             <div className="h-px flex-1 bg-keposhka-cream/30" />
           </div>
@@ -493,7 +493,7 @@ export function EditorPanel() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="BUSCAR..."
+              placeholder="SEARCH..."
               className="
                 w-full pl-8 pr-8 py-2 text-sm font-mono uppercase
                 bg-keposhka-black text-keposhka-cream
@@ -523,8 +523,8 @@ export function EditorPanel() {
 
           {/* Filter Buttons */}
           <div className="flex gap-1">
-            <FilterButton label="TODOS" value="all" current={filterStatus} count={statusCounts.all} onClick={setFilterStatus} />
-            <FilterButton label="LISTO" value="done" current={filterStatus} count={statusCounts.done} onClick={setFilterStatus} />
+            <FilterButton label="ALL" value="all" current={filterStatus} count={statusCounts.all} onClick={setFilterStatus} />
+            <FilterButton label="DONE" value="done" current={filterStatus} count={statusCounts.done} onClick={setFilterStatus} />
             <FilterButton label="PEND." value="pending" current={filterStatus} count={statusCounts.pending} onClick={setFilterStatus} />
           </div>
         </div>
@@ -534,14 +534,14 @@ export function EditorPanel() {
           {isLoadingAnnotation && (
             <div className="flex items-center justify-center py-4 gap-2">
               <div className="w-3 h-3 border-2 border-keposhka-red border-t-transparent animate-spin" />
-              <span className="text-xs font-mono text-keposhka-cream/80 uppercase">Cargando datos...</span>
+              <span className="text-xs font-mono text-keposhka-cream/80 uppercase">Loading data...</span>
             </div>
           )}
           {filteredImages.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-4xl text-keposhka-cream/30 mb-2">∅</div>
               <span className="text-xs font-mono text-keposhka-cream/60 uppercase">
-                {images.length === 0 ? 'SIN ARCHIVOS' : 'SIN RESULTADOS'}
+                {images.length === 0 ? 'NO FILES' : 'NO RESULTS'}
               </span>
             </div>
           ) : (
@@ -590,7 +590,7 @@ export function EditorPanel() {
           <p className="text-[10px] text-keposhka-cream/70 text-center font-mono">
             <kbd className="px-1.5 py-0.5 bg-keposhka-cream/10 border border-keposhka-cream/40 text-keposhka-cream">↑</kbd>
             <kbd className="px-1.5 py-0.5 bg-keposhka-cream/10 border border-keposhka-cream/40 text-keposhka-cream ml-1">↓</kbd>
-            <span className="ml-2 uppercase">Navegar</span>
+            <span className="ml-2 uppercase">Navigate</span>
           </p>
         </div>
       </div>
@@ -600,7 +600,7 @@ export function EditorPanel() {
         {/* Section header */}
         <div className="px-4 py-2 bg-keposhka-red/20 border-b border-keposhka-red/50 flex items-center justify-between">
           <span className="text-xs font-heading uppercase tracking-[0.2em] text-keposhka-red">
-            CAMPO DE TRADUCCIÓN
+            TRANSLATION FIELD
           </span>
           {/* Character count */}
           <div className="flex items-center gap-2 text-[10px] font-mono">
@@ -624,7 +624,7 @@ export function EditorPanel() {
               onCompositionEnd={handleCompositionEnd}
               onBlur={handleBlur}
               onSelect={handleSelect}
-              data-placeholder="INGRESE TEXTO TRADUCIDO..."
+              data-placeholder="ENTER TRANSLATED TEXT..."
               spellCheck={false}
               className="
                 w-full h-28 px-3 py-2 text-sm font-mono
@@ -641,7 +641,7 @@ export function EditorPanel() {
           {/* Status and help */}
           <div className="mt-2 flex items-center justify-between">
             <span className="text-[10px] text-keposhka-cream/60 font-mono uppercase">
-              Enter = Nueva Línea
+              Enter = New Line
             </span>
             <span className={`text-xs font-heading uppercase tracking-wider flex items-center gap-1 ${statusMessage.color}`}>
               <span className="font-mono">[{statusMessage.icon}]</span>
@@ -653,15 +653,15 @@ export function EditorPanel() {
           <div className="mt-3 flex items-center gap-4 text-[10px] font-mono uppercase">
             <span className="flex items-center gap-1">
               <span className="w-3 h-3 bg-keposhka-red border border-keposhka-red"></span>
-              <span className="text-keposhka-cream/70">Prohibido</span>
+              <span className="text-keposhka-cream/70">Invalid</span>
             </span>
             <span className="flex items-center gap-1">
               <span className="w-3 h-3 bg-amber-500 border border-amber-500"></span>
-              <span className="text-keposhka-cream/70">Excedente</span>
+              <span className="text-keposhka-cream/70">Unassigned</span>
             </span>
             <span className="flex items-center gap-1">
               <span className="w-3 h-3 bg-green-600/60 border border-green-600"></span>
-              <span className="text-keposhka-cream/70">Asignado</span>
+              <span className="text-keposhka-cream/70">Assigned</span>
             </span>
           </div>
         </div>
@@ -703,11 +703,11 @@ export function EditorPanel() {
           {isSaving ? (
             <>
               <div className="w-4 h-4 border-2 border-keposhka-white border-t-transparent animate-spin" />
-              <span>PROCESANDO...</span>
+              <span>PROCESSING...</span>
             </>
           ) : (
             <>
-              <span>COMPLETAR</span>
+              <span>COMPLETE</span>
               <span className="text-xs font-mono text-keposhka-cream/50">[SHIFT+ENTER]</span>
             </>
           )}
@@ -726,7 +726,7 @@ export function EditorPanel() {
             disabled:opacity-50 disabled:cursor-not-allowed
           "
         >
-          {canSaveDraft ? 'GUARDAR PENDIENTE → SIGUIENTE' : 'OMITIR → SIGUIENTE PENDIENTE'}
+          {canSaveDraft ? 'SAVE DRAFT → NEXT' : 'SKIP → NEXT PENDING'}
         </button>
       </div>
     </div>
