@@ -1,6 +1,6 @@
 # Keposhka Labeler
 
-Labeling tool for images of the fictional "Keposhka" language. Draw bounding boxes around characters and write the translation - the app automatically assigns letters to boxes using intelligent spatial ordering (left-to-right, top-to-bottom).
+Labeling tool for images of the fictional "Keposhka" language. These labels are used to train a YOLO model (an object detection model), which could power an app that translates Keposhka text from images into common letters. Draw bounding boxes around characters and write the translation - the app automatically assigns letters to boxes using intelligent spatial ordering (left-to-right, top-to-bottom).
 
 ![Keposhka Labeler Interface](images/app.png)
 
@@ -177,18 +177,6 @@ Once both servers are running:
 3. Place some images in `backend/data/images/` to start labeling
 
 > **Note**: New images are detected automatically without restarting servers. If you add images while the app is open, simply refresh the browser page (F5) or change a filter to reload the image list.
-
-### Production Build
-
-```bash
-cd frontend
-
-# Optimized production build
-bun run build
-
-# Preview production build
-bun run preview
-```
 
 ## Usage Guide
 
