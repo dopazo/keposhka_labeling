@@ -791,39 +791,39 @@ export function StageBoard() {
       )}
 
       {/* Instructions overlay - Brutalist industrial */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none">
-        <div className="bg-keposhka-black/90 border-2 border-keposhka-steel px-4 py-2 flex gap-6">
-          <span className="text-[11px] font-mono text-keposhka-cream uppercase">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none w-max">
+        <div className="bg-keposhka-black/90 border-2 border-keposhka-steel px-8 py-2 flex gap-3 w-max">
+          <span className="text-[11px] font-mono text-keposhka-cream uppercase whitespace-nowrap">
             <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
               DRAG
             </kbd>
             Draw
           </span>
-          <span className="text-[11px] font-mono text-keposhka-cream uppercase">
+          <span className="text-[11px] font-mono text-keposhka-cream uppercase whitespace-nowrap">
             <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
               CLICK
             </kbd>
             Repeat
           </span>
-          <span className="text-[11px] font-mono text-keposhka-cream uppercase">
+          <span className="text-[11px] font-mono text-keposhka-cream uppercase whitespace-nowrap">
             <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
               DEL
             </kbd>
             Delete
           </span>
-          <span className="text-[11px] font-mono text-keposhka-cream uppercase">
+          <span className="text-[11px] font-mono text-keposhka-cream uppercase whitespace-nowrap">
             <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
               ESC
             </kbd>
             Deselect
           </span>
-          <span className="text-[11px] font-mono text-keposhka-cream uppercase">
+          <span className="text-[11px] font-mono text-keposhka-cream uppercase whitespace-nowrap">
             <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
               R-CLICK
             </kbd>
             Digraph
           </span>
-          <span className="text-[11px] font-mono text-keposhka-cream uppercase">
+          <span className="text-[11px] font-mono text-keposhka-cream uppercase whitespace-nowrap">
             <kbd className="px-1.5 py-0.5 bg-keposhka-steel border border-keposhka-red text-keposhka-red mr-1">
               CTRL+DRAG
             </kbd>
