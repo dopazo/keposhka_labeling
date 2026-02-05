@@ -208,7 +208,7 @@ export function StageBoard() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeElement = document.activeElement;
-      if (activeElement?.tagName === 'TEXTAREA' || activeElement?.tagName === 'INPUT') {
+      if (activeElement?.tagName === 'TEXTAREA' || activeElement?.tagName === 'INPUT' || (activeElement as HTMLElement)?.isContentEditable) {
         return;
       }
 
