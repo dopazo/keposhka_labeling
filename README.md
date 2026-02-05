@@ -2,6 +2,8 @@
 
 Labeling tool for images of the fictional "Keposhka" language. Draw bounding boxes around characters and write the translation - the app automatically assigns letters to boxes using intelligent spatial ordering (left-to-right, top-to-bottom).
 
+![Keposhka Labeler Interface](images/app.png)
+
 ## Features
 
 **Intelligent Labeling**
