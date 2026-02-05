@@ -1,277 +1,279 @@
 # Keposhka Labeler
 
-Herramienta de etiquetado para imágenes del lenguaje ficticio "Keposhka". Dibuja bounding boxes alrededor de caracteres y escribe la traducción - la app asigna automáticamente las letras a las cajas usando ordenamiento espacial inteligente (izquierda-derecha, arriba-abajo).
+Labeling tool for images of the fictional "Keposhka" language. Draw bounding boxes around characters and write the translation - the app automatically assigns letters to boxes using intelligent spatial ordering (left-to-right, top-to-bottom).
 
-## Características
+## Features
 
-**Etiquetado Inteligente**
-- Dibuja bounding boxes con arrastre del mouse o click rápido para repetir el último tamaño
-- Asignación automática de caracteres usando algoritmo de ordenamiento espacial
-- Detección automática de dígrafos (CH, GH, SH, TH) al escribir o dibujar cajas
-- Validación en tiempo real con resaltado de texto (inválidos en rojo, no asignados en ámbar)
-- Feedback visual en cajas (verde = asignado, rojo punteado = sin asignar)
-- Slider de tolerancia de líneas (0.3x-5.0x) para texto en arcos o con variación de altura
+**Intelligent Labeling**
+- Draw bounding boxes with mouse drag or quick click to repeat the last size
+- Automatic character assignment using spatial ordering algorithm
+- Automatic digraph detection (CH, GH, SH, TH) when typing or drawing boxes
+- Real-time validation with text highlighting (invalid in red, unassigned in amber)
+- Visual feedback on boxes (green = assigned, red dashed = unassigned)
+- Line tolerance slider (0.3x-5.0x) for text in arcs or with height variation
 
-**Canvas Interactivo**
-- Zoom y pan con rueda del mouse o atajos de teclado (+/-, Ctrl+Arrastrar)
-- Redimensionar y mover cajas con handles de transformación
-- Toggle de visibilidad de cajas (tecla V) para ver la imagen original
-- Indicador de click rápido muestra las dimensiones de la última caja en rojo
+**Interactive Canvas**
+- Zoom and pan with mouse wheel or keyboard shortcuts (+/-, Ctrl+Drag)
+- Resize and move boxes with transformation handles
+- Box visibility toggle (V key) to see the original image
+- Quick click indicator shows last box dimensions in red
 
-**Gestión de Flujo de Trabajo**
-- Filtrar imágenes por estado (todas/pendientes/completadas)
-- Buscar imágenes por nombre de archivo
-- Navegación con atajos de teclado
-- Dos modos de guardado: "Completar" (Shift+Enter) marca como finalizado, "Guardar Pendiente" guarda borrador
-- Avance automático a la siguiente imagen pendiente después de guardar
+**Workflow Management**
+- Filter images by status (all/pending/completed)
+- Search images by filename
+- Keyboard shortcut navigation
+- Two save modes: "Complete" (Shift+Enter) marks as finished, "Save Pending" saves draft
+- Auto-advance to next pending image after saving
 
-**Alfabeto Keposhka**
-- Panel de referencia interactivo con 70 caracteres válidos (0-9, A-Z, dígrafos case-sensitive)
-- Inserción de caracteres con click en posición del cursor
-- Validación completa del alfabeto con resaltado en tiempo real
+**Keposhka Alphabet**
+- Interactive reference panel with 70 valid characters (0-9, A-Z, case-sensitive digraphs)
+- Character insertion with click at cursor position
+- Complete alphabet validation with real-time highlighting
 
-## Stack Tecnológico
+## Tech Stack
 
 ### Backend
-- **FastAPI** - Framework web moderno de Python
-- **Uvicorn** - Servidor ASGI
-- **Pillow** - Procesamiento de imágenes
-- **uv** - Gestor de paquetes Python
+- **FastAPI** - Modern Python web framework
+- **Uvicorn** - ASGI server
+- **Pillow** - Image processing
+- **uv** - Python package manager
 
 ### Frontend
-- **React 19** + **TypeScript** - Framework UI
-- **Vite 7** - Herramienta de build y servidor de desarrollo
-- **Tailwind CSS 3** - Estilos utility-first
-- **react-konva** - Canvas para dibujo y manipulación
-- **Zustand** - Gestión de estado
-- **Zod** - Validación de esquemas
-- **Bun** - Gestor de paquetes JavaScript
+- **React 19** + **TypeScript** - UI framework
+- **Vite 7** - Build tool and development server
+- **Tailwind CSS 3** - Utility-first styles
+- **react-konva** - Canvas for drawing and manipulation
+- **Zustand** - State management
+- **Zod** - Schema validation
+- **Bun** - JavaScript package manager
 
-## Estructura del Proyecto
+## Project Structure
 
 ```
 keposhka_labeling/
 ├── backend/
-│   ├── main.py              # Aplicación FastAPI
-│   ├── schemas.py           # Modelos Pydantic
-│   ├── utils.py             # Utilidades de exportación YOLO
-│   ├── pyproject.toml       # Dependencias Python
+│   ├── main.py              # FastAPI application
+│   ├── schemas.py           # Pydantic models
+│   ├── utils.py             # YOLO export utilities
+│   ├── pyproject.toml       # Python dependencies
 │   └── data/
-│       ├── images/          # Imágenes fuente a anotar
-│       ├── annotations/     # Archivos .txt (YOLO) y .json generados
-│       └── reference/       # Referencia del alfabeto Keposhka
+│       ├── images/          # Source images to annotate
+│       ├── annotations/     # Generated .txt (YOLO) and .json files
+│       └── reference/       # Keposhka alphabet reference
 │
 └── frontend/
     ├── src/
     │   ├── components/
     │   │   ├── canvas/
-    │   │   │   ├── StageBoard.tsx      # Componente principal del canvas
-    │   │   │   ├── BoxTransformer.tsx  # Redimensionamiento/transformación
-    │   │   │   └── UrlImage.tsx        # Cargador de imágenes
-    │   │   ├── EditorPanel.tsx         # Panel lateral con input de texto
-    │   │   ├── ReferencePanel.tsx      # Panel derecho con alfabeto
-    │   │   └── BoxContextMenu.tsx      # Menú contextual para dígrafos
+    │   │   │   ├── StageBoard.tsx      # Main canvas component
+    │   │   │   ├── BoxTransformer.tsx  # Resize/transformation
+    │   │   │   └── UrlImage.tsx        # Image loader
+    │   │   ├── EditorPanel.tsx         # Side panel with text input
+    │   │   ├── ReferencePanel.tsx      # Right panel with alphabet
+    │   │   └── BoxContextMenu.tsx      # Context menu for digraphs
     │   ├── lib/
-    │   │   ├── sorter.ts               # Algoritmo de ordenamiento espacial
-    │   │   ├── validator.ts            # Validador del alfabeto Keposhka
-    │   │   ├── schemas.ts              # Esquemas de validación Zod
-    │   │   └── types.ts                # Definiciones de tipos TypeScript
+    │   │   ├── sorter.ts               # Spatial ordering algorithm
+    │   │   ├── validator.ts            # Keposhka alphabet validator
+    │   │   ├── schemas.ts              # Zod validation schemas
+    │   │   └── types.ts                # TypeScript type definitions
     │   └── store/
-    │       └── useStore.ts             # Gestión de estado Zustand
+    │       └── useStore.ts             # Zustand state management
     ├── package.json
-    └── vite.config.ts                  # Config de Vite con proxy API
+    └── vite.config.ts                  # Vite config with API proxy
 ```
 
-## Instalación
+## Installation
 
-### Paso 1: Instalar Dependencias del Sistema
+### Step 1: Install System Dependencies
 
-Necesitarás instalar **solo 3 herramientas** (uv instalará Python automáticamente):
+You'll need to install **only 3 tools** (uv will install Python automatically):
 
-#### 1. uv (Gestor de paquetes Python)
-**Windows**: Abre PowerShell (búscalo en el menú Inicio) y ejecuta:
+#### 1. uv (Python package manager)
+**Windows**: Open PowerShell (search for it in the Start menu) and run:
 ```bash
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-**macOS/Linux**: Abre la Terminal y ejecuta:
+**macOS/Linux**: Open Terminal and run:
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Después de instalar, **cierra y vuelve a abrir** la terminal para que se reconozca el comando. Verifica con: `uv --version`
+After installing, **close and reopen** the terminal for the command to be recognized. Verify with: `uv --version`
 
-> **Nota**: uv instalará automáticamente Python 3.13+ la primera vez que ejecutes `uv sync`, no necesitas instalarlo manualmente.
+> **Note**: uv will automatically install Python 3.13+ the first time you run `uv sync`, you don't need to install it manually.
 
-Más información: [github.com/astral-sh/uv](https://github.com/astral-sh/uv)
+More info: [github.com/astral-sh/uv](https://github.com/astral-sh/uv)
 
 #### 2. Node.js 18+
-- **Windows/macOS**: Descarga e instala el instalador desde [nodejs.org](https://nodejs.org/) (el instalador te guiará por el proceso)
-- **macOS con Homebrew**: `brew install node`
+- **Windows/macOS**: Download and install the installer from [nodejs.org](https://nodejs.org/) (the installer will guide you through the process)
+- **macOS with Homebrew**: `brew install node`
 - **Linux (Ubuntu/Debian)**:
   ```bash
   curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
   sudo apt-get install -y nodejs
   ```
 
-Verifica con: `node --version` (cierra y reabre la terminal después de instalar)
+Verify with: `node --version` (close and reopen the terminal after installing)
 
-#### 3. Bun (Gestor de paquetes JavaScript)
-**Windows**: Abre PowerShell y ejecuta:
+#### 3. Bun (JavaScript package manager)
+**Windows**: Open PowerShell and run:
 ```bash
 powershell -c "irm bun.sh/install.ps1|iex"
 ```
 
-**macOS/Linux**: Abre la Terminal y ejecuta:
+**macOS/Linux**: Open Terminal and run:
 ```bash
 curl -fsSL https://bun.sh/install | bash
 ```
 
-Después de instalar, **cierra y vuelve a abrir** la terminal. Verifica con: `bun --version`
+After installing, **close and reopen** the terminal. Verify with: `bun --version`
 
-Más información: [bun.sh](https://bun.sh)
+More info: [bun.sh](https://bun.sh)
 
-### Paso 2: Configurar el Backend
+### Step 2: Set Up Backend
 
-Abre una terminal en la carpeta del proyecto y ejecuta:
+Open a terminal in the project folder and run:
 
 ```bash
 cd backend
 
-# Instalar dependencias (solo la primera vez)
+# Install dependencies (first time only)
 uv sync
 
-# Ejecutar servidor de desarrollo
+# Run development server
 uv run uvicorn main:app --reload
 ```
 
-Verás mensajes indicando que el servidor está corriendo. **Deja esta terminal abierta** mientras uses la aplicación.
+You'll see messages indicating the server is running. **Leave this terminal open** while using the application.
 
-El backend estará disponible en `http://127.0.0.1:8000`
+The backend will be available at `http://127.0.0.1:8000`
 
-### Paso 3: Configurar el Frontend
+### Step 3: Set Up Frontend
 
-**Sin cerrar la terminal anterior**, abre una **segunda terminal** en la misma carpeta del proyecto y ejecuta:
+**Without closing the previous terminal**, open a **second terminal** in the same project folder and run:
 
 ```bash
 cd frontend
 
-# Instalar dependencias (solo la primera vez)
+# Install dependencies (first time only)
 bun install
 
-# Ejecutar servidor de desarrollo
+# Run development server
 bun run dev
 ```
 
-Verás un mensaje con la URL donde abrir la aplicación. **Deja ambas terminales abiertas** mientras uses la aplicación.
+You'll see a message with the URL to open the application. **Keep both terminals open** while using the application.
 
-El frontend estará disponible en `http://localhost:5173`
+The frontend will be available at `http://localhost:5173`
 
-### Verificación Rápida
+### Quick Verification
 
-Una vez que ambos servidores estén corriendo:
-1. Abre `http://localhost:5173` en tu navegador
-2. Deberías ver la interfaz del labeler
-3. Coloca algunas imágenes en `backend/data/images/` para comenzar a etiquetar
+Once both servers are running:
+1. Open `http://localhost:5173` in your browser
+2. You should see the labeler interface
+3. Place some images in `backend/data/images/` to start labeling
 
-### Build para Producción
+> **Note**: New images are detected automatically without restarting servers. If you add images while the app is open, simply refresh the browser page (F5) or change a filter to reload the image list.
+
+### Production Build
 
 ```bash
 cd frontend
 
-# Build optimizado para producción
+# Optimized production build
 bun run build
 
-# Preview del build de producción
+# Preview production build
 bun run preview
 ```
 
-## Guía de Uso
+## Usage Guide
 
-### Flujo Básico
+### Basic Workflow
 
-1. **Agregar Imágenes**: Coloca tus imágenes Keposhka en `backend/data/images/`
-2. **Iniciar Servidores**: Ejecuta ambos servidores (backend y frontend)
-3. **Abrir App**: Navega a `http://localhost:5173`
-4. **Seleccionar Imagen**: Click en una imagen de la lista del panel izquierdo
-5. **Dibujar Cajas**: Click y arrastra en el canvas para crear bounding boxes
-6. **Escribir Traducción**: Ingresa texto o click en caracteres del panel derecho para insertar
-7. **Asignación Automática**: Las etiquetas y dígrafos se asignan automáticamente en orden de lectura
-8. **Ajustar Tolerancia**: Usa el slider superior izquierdo si el texto está en arco (valores altos = más tolerante)
-9. **Guardar**: "Completar" (`Shift+Enter`) finaliza, "Guardar Pendiente" guarda borrador
+1. **Add Images**: Place your Keposhka images in `backend/data/images/`
+2. **Start Servers**: Run both servers (backend and frontend)
+3. **Open App**: Navigate to `http://localhost:5173`
+4. **Select Image**: Click on an image from the left panel list
+5. **Draw Boxes**: Click and drag on canvas to create bounding boxes
+6. **Write Translation**: Enter text or click characters from right panel to insert
+7. **Auto-Assignment**: Labels and digraphs are automatically assigned in reading order
+8. **Adjust Tolerance**: Use top-left slider if text is in an arc (high values = more tolerant)
+9. **Save**: "Complete" (`Shift+Enter`) finalizes, "Save Pending" saves draft
 
-### Atajos de Teclado
+### Keyboard Shortcuts
 
-| Atajo | Acción |
-|-------|--------|
-| `Arrastrar` | Dibujar nueva bounding box |
-| `Click` | Crear caja con las últimas dimensiones (indicador rojo) |
-| `Delete` / `Backspace` | Eliminar caja seleccionada |
-| `Esc` | Deseleccionar caja |
-| `Click Derecho` | Abrir menú de dígrafos (establecer charCount) |
-| `Shift+Enter` | Guardar y avanzar a siguiente imagen |
-| `Ctrl+Arrastrar` | Desplazar canvas |
-| `Rueda del Mouse` | Zoom in/out |
+| Shortcut | Action |
+|----------|--------|
+| `Drag` | Draw new bounding box |
+| `Click` | Create box with last dimensions (red indicator) |
+| `Delete` / `Backspace` | Delete selected box |
+| `Esc` | Deselect box |
+| `Right Click` | Open digraph menu (set charCount) |
+| `Shift+Enter` | Save and advance to next image |
+| `Ctrl+Drag` | Pan canvas |
+| `Mouse Wheel` | Zoom in/out |
 | `+` / `-` | Zoom in/out |
-| `0` | Resetear zoom a 100% |
-| `V` | Toggle visibilidad de cajas |
-| `Flechas` | Navegar entre imágenes |
+| `0` | Reset zoom to 100% |
+| `V` | Toggle box visibility |
+| `Arrows` | Navigate between images |
 
-### Trabajando con Dígrafos
+### Working with Digraphs
 
-Los dígrafos (`CH`, `ch`, `GH`, `gh`, `SH`, `sh`, `TH`, `th`) se detectan automáticamente al:
-- Dibujar nuevas cajas
-- Escribir o editar texto en el campo de traducción
-- Insertar caracteres desde el panel de referencia
+Digraphs (`CH`, `ch`, `GH`, `gh`, `SH`, `sh`, `TH`, `th`) are automatically detected when:
+- Drawing new boxes
+- Writing or editing text in the translation field
+- Inserting characters from the reference panel
 
-Para ajuste manual:
-- Click derecho en una caja para abrir el menú contextual
-- Selecciona la cantidad de caracteres (1, 2 o 3)
-- Aparecerá una insignia roja mostrando la cantidad
+For manual adjustment:
+- Right-click on a box to open the context menu
+- Select character count (1, 2, or 3)
+- A red badge will appear showing the count
 
-### Estados de Imagen
+### Image States
 
-- **Pendiente** (gris) - Aún no completada o guardada como borrador
-- **Completada** (verde) - Completamente anotada y guardada
+- **Pending** (gray) - Not yet completed or saved as draft
+- **Completed** (green) - Fully annotated and saved
 
-Filtra imágenes usando el dropdown de estado en el panel izquierdo.
+Filter images using the status dropdown in the left panel.
 
 ## API Endpoints
 
-| Endpoint | Método | Descripción |
+| Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/images` | GET | Lista todas las imágenes con estado y dimensiones |
-| `/api/annotations/{filename}` | GET | Obtiene anotación existente de una imagen |
-| `/api/save` | POST | Guarda anotación (YOLO + JSON) |
+| `/api/images` | GET | Lists all images with status and dimensions |
+| `/api/annotations/{filename}` | GET | Gets existing annotation for an image |
+| `/api/save` | POST | Saves annotation (YOLO + JSON) |
 | `/health` | GET | Health check |
-| `/images/{filename}` | GET | Sirve archivos de imagen estáticos |
+| `/images/{filename}` | GET | Serves static image files |
 
-## Formato de Salida
+## Output Format
 
-Para cada imagen anotada, se generan dos archivos en `backend/data/annotations/`:
+For each annotated image, two files are generated in `backend/data/annotations/`:
 
-### 1. Formato YOLO (`.txt`)
-Usado para entrenamiento de modelos. Solo se genera cuando el estado es "done".
+### 1. YOLO Format (`.txt`)
+Used for model training. Only generated when status is "done".
 
 ```
 class_id x_center y_center width height
 ```
 
-Todas las coordenadas están normalizadas (rango 0-1).
+All coordinates are normalized (range 0-1).
 
-Ejemplo:
+Example:
 ```
 10 0.5234 0.3125 0.0260 0.0556
 42 0.5703 0.3125 0.0234 0.0556
 ```
 
-### 2. Metadata JSON (`.json`)
-Usado para re-edición. Siempre se genera (borradores y completados).
+### 2. JSON Metadata (`.json`)
+Used for re-editing. Always generated (drafts and completed).
 
 ```json
 {
   "filename": "image001.jpg",
-  "translatedText": "Hola mundo",
+  "translatedText": "Hello world",
   "imageWidth": 1920,
   "imageHeight": 1080,
   "status": "done",
@@ -289,46 +291,46 @@ Usado para re-edición. Siempre se genera (borradores y completados).
 }
 ```
 
-### 3. Archivo de Clases (`classes.txt`)
-Auto-generado al iniciar el backend con los 70 caracteres Keposhka.
+### 3. Classes File (`classes.txt`)
+Auto-generated on backend startup with the 70 Keposhka characters.
 
-## Algoritmo de Ordenamiento
+## Sorting Algorithm
 
-El algoritmo de ordenamiento espacial (`sorter.ts`) funciona así:
+The spatial sorting algorithm (`sorter.ts`) works as follows:
 
-1. **Detección de Filas**: Agrupa cajas en filas horizontales usando umbral dinámico (70% de altura promedio × multiplicador de tolerancia)
-2. **Ordenamiento Izquierda-Derecha**: Ordena cajas dentro de cada fila por coordenada X
-3. **Asignación de Caracteres**: Consume caracteres del texto traducido (saltando espacios)
-4. **Detección de Dígrafos**: Detecta automáticamente dígrafos y establece `charCount=2` cuando corresponde
-5. **Validación**: Asegura que el total de caracteres coincida con la capacidad total de cajas
+1. **Row Detection**: Groups boxes into horizontal rows using dynamic threshold (70% of average height × tolerance multiplier)
+2. **Left-to-Right Sorting**: Sorts boxes within each row by X coordinate
+3. **Character Assignment**: Consumes characters from translated text (skipping spaces)
+4. **Digraph Detection**: Automatically detects digraphs and sets `charCount=2` when appropriate
+5. **Validation**: Ensures total characters match total box capacity
 
-Feedback visual:
-- **Borde verde**: Caja con etiqueta asignada
-- **Borde rojo punteado**: Caja sin asignar (estado desbalanceado)
-- **Texto rojo**: Caracteres inválidos en el campo de traducción
-- **Texto ámbar**: Caracteres no asignados a cajas
+Visual feedback:
+- **Green border**: Box with assigned label
+- **Red dashed border**: Unassigned box (unbalanced state)
+- **Red text**: Invalid characters in translation field
+- **Amber text**: Characters not assigned to boxes
 
-## Solución de Problemas
+## Troubleshooting
 
-**El backend no inicia:**
-- Verifica que `uv` está instalado correctamente (ejecuta `uv --version`)
-- Si uv falla al instalar Python, instálalo manualmente desde [python.org](https://www.python.org/downloads/) (necesita 3.13+)
+**Backend won't start:**
+- Verify that `uv` is installed correctly (run `uv --version`)
+- If uv fails to install Python, install it manually from [python.org](https://www.python.org/downloads/) (needs 3.13+)
 
-**El frontend no inicia:**
-- Verifica que Bun está instalado: `curl -fsSL https://bun.sh/install | bash`
-- Limpia node_modules: `rm -rf node_modules && bun install`
+**Frontend won't start:**
+- Verify that Bun is installed: `curl -fsSL https://bun.sh/install | bash`
+- Clean node_modules: `rm -rf node_modules && bun install`
 
-**Las imágenes no cargan:**
-- Verifica que las imágenes están en `backend/data/images/`
-- Verifica que el servidor backend está corriendo en el puerto 8000
-- Revisa la consola del navegador por errores CORS
+**Images won't load:**
+- Verify images are in `backend/data/images/`
+- Verify backend server is running on port 8000
+- Check browser console for CORS errors
 
-**Las cajas no se alinean:**
-- Las imágenes se ajustan automáticamente al canvas con transformación de coordenadas correcta
-- El estado de zoom/pan se resetea al cambiar de imagen
+**Boxes don't align:**
+- Images auto-fit to canvas with correct coordinate transformation
+- Zoom/pan state resets when changing images
 
-## Licencia
+## License
 MIT
 
-## Agradecimientos
-- Wyatt Kennedy por crear fuente [Keposhka Regular Font](https://www.1001fonts.com/keposhka-regular-font.html)
+## Acknowledgments
+- Wyatt Kennedy for creating [Keposhka Regular Font](https://www.1001fonts.com/keposhka-regular-font.html)
