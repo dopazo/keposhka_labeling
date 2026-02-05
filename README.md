@@ -89,76 +89,81 @@ keposhka_labeling/
 Necesitarás instalar **solo 3 herramientas** (uv instalará Python automáticamente):
 
 #### 1. uv (Gestor de paquetes Python)
-Instala con un solo comando:
-
+**Windows**: Abre PowerShell (búscalo en el menú Inicio) y ejecuta:
 ```bash
-# Windows (PowerShell)
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
 
-# macOS/Linux
+**macOS/Linux**: Abre la Terminal y ejecuta:
+```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Verifica la instalación: `uv --version`
-
-Más información: [github.com/astral-sh/uv](https://github.com/astral-sh/uv)
+Después de instalar, **cierra y vuelve a abrir** la terminal para que se reconozca el comando. Verifica con: `uv --version`
 
 > **Nota**: uv instalará automáticamente Python 3.13+ la primera vez que ejecutes `uv sync`, no necesitas instalarlo manualmente.
 
+Más información: [github.com/astral-sh/uv](https://github.com/astral-sh/uv)
+
 #### 2. Node.js 18+
-- **Windows/macOS**: Descarga el instalador LTS desde [nodejs.org](https://nodejs.org/)
-- **macOS**: `brew install node`
-- **Linux**:
+- **Windows/macOS**: Descarga e instala el instalador desde [nodejs.org](https://nodejs.org/) (el instalador te guiará por el proceso)
+- **macOS con Homebrew**: `brew install node`
+- **Linux (Ubuntu/Debian)**:
   ```bash
-  # Ubuntu/Debian
   curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
   sudo apt-get install -y nodejs
   ```
 
-Verifica la instalación: `node --version`
+Verifica con: `node --version` (cierra y reabre la terminal después de instalar)
 
 #### 3. Bun (Gestor de paquetes JavaScript)
-Instala con un solo comando:
-
+**Windows**: Abre PowerShell y ejecuta:
 ```bash
-# Windows (PowerShell)
 powershell -c "irm bun.sh/install.ps1|iex"
+```
 
-# macOS/Linux
+**macOS/Linux**: Abre la Terminal y ejecuta:
+```bash
 curl -fsSL https://bun.sh/install | bash
 ```
 
-Verifica la instalación: `bun --version`
+Después de instalar, **cierra y vuelve a abrir** la terminal. Verifica con: `bun --version`
 
 Más información: [bun.sh](https://bun.sh)
 
 ### Paso 2: Configurar el Backend
 
+Abre una terminal en la carpeta del proyecto y ejecuta:
+
 ```bash
 cd backend
 
-# Instalar dependencias (primera vez)
+# Instalar dependencias (solo la primera vez)
 uv sync
 
 # Ejecutar servidor de desarrollo
 uv run uvicorn main:app --reload
 ```
 
+Verás mensajes indicando que el servidor está corriendo. **Deja esta terminal abierta** mientras uses la aplicación.
+
 El backend estará disponible en `http://127.0.0.1:8000`
 
 ### Paso 3: Configurar el Frontend
 
-Abre una **nueva terminal** y ejecuta:
+**Sin cerrar la terminal anterior**, abre una **segunda terminal** en la misma carpeta del proyecto y ejecuta:
 
 ```bash
 cd frontend
 
-# Instalar dependencias (primera vez)
+# Instalar dependencias (solo la primera vez)
 bun install
 
 # Ejecutar servidor de desarrollo
 bun run dev
 ```
+
+Verás un mensaje con la URL donde abrir la aplicación. **Deja ambas terminales abiertas** mientras uses la aplicación.
 
 El frontend estará disponible en `http://localhost:5173`
 
@@ -302,31 +307,6 @@ Feedback visual:
 - **Borde rojo punteado**: Caja sin asignar (estado desbalanceado)
 - **Texto rojo**: Caracteres inválidos en el campo de traducción
 - **Texto ámbar**: Caracteres no asignados a cajas
-
-## Configuración
-
-### Proxy de Vite (Frontend)
-
-El frontend hace proxy de las peticiones API para evitar problemas de CORS:
-
-```typescript
-// vite.config.ts
-proxy: {
-  '/api': {
-    target: 'http://127.0.0.1:8000',
-    changeOrigin: true,
-  }
-}
-```
-
-### Alias de Rutas
-
-```typescript
-// tsconfig.json
-"paths": {
-  "@/*": ["./src/*"]
-}
-```
 
 ## Solución de Problemas
 
