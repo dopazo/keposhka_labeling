@@ -248,7 +248,13 @@ export const useStore = create<AppState>((set, get) => ({
   // Text Actions - Triggers recalculation
   setInputText: (text) =>
     set((state) => {
-      const result = recalculateState(state.boxes, text, state.rowThresholdMultiplier);
+      // Re-predict digraphs for existing boxes based on updated text
+      const boxesWithPredictedDigraphs = repredictDigraphsForBoxes(
+        state.boxes,
+        text,
+        state.rowThresholdMultiplier
+      );
+      const result = recalculateState(boxesWithPredictedDigraphs, text, state.rowThresholdMultiplier);
       return {
         inputText: text,
         boxes: result.boxes,
