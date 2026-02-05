@@ -7,8 +7,10 @@ Herramienta de etiquetado para imágenes del lenguaje ficticio "Keposhka". Dibuj
 **Etiquetado Inteligente**
 - Dibuja bounding boxes con arrastre del mouse o click rápido para repetir el último tamaño
 - Asignación automática de caracteres usando algoritmo de ordenamiento espacial
-- Validación en tiempo real con feedback visual (verde = asignado, rojo = sin asignar)
-- Soporte para dígrafos (CH, GH, SH, TH) mediante menú contextual
+- Detección automática de dígrafos (CH, GH, SH, TH) al escribir o dibujar cajas
+- Validación en tiempo real con resaltado de texto (inválidos en rojo, no asignados en ámbar)
+- Feedback visual en cajas (verde = asignado, rojo punteado = sin asignar)
+- Slider de tolerancia de líneas (0.3x-5.0x) para texto en arcos o con variación de altura
 
 **Canvas Interactivo**
 - Zoom y pan con rueda del mouse o atajos de teclado (+/-, Ctrl+Arrastrar)
@@ -20,13 +22,13 @@ Herramienta de etiquetado para imágenes del lenguaje ficticio "Keposhka". Dibuj
 - Filtrar imágenes por estado (todas/pendientes/completadas)
 - Buscar imágenes por nombre de archivo
 - Navegación con atajos de teclado
-- Avance automático a la siguiente imagen pendiente al guardar
-- Modo borrador para anotaciones en progreso
+- Dos modos de guardado: "Completar" (Shift+Enter) marca como finalizado, "Guardar Pendiente" guarda borrador
+- Avance automático a la siguiente imagen pendiente después de guardar
 
 **Alfabeto Keposhka**
 - Panel de referencia interactivo con 70 caracteres válidos (0-9, A-Z, dígrafos case-sensitive)
-- Inserción de caracteres con click
-- Validación completa del alfabeto
+- Inserción de caracteres con click en posición del cursor
+- Validación completa del alfabeto con resaltado en tiempo real
 
 ## Stack Tecnológico
 
@@ -137,9 +139,10 @@ bun run preview
 3. **Abrir App**: Navega a `http://localhost:5173`
 4. **Seleccionar Imagen**: Click en una imagen de la lista del panel izquierdo
 5. **Dibujar Cajas**: Click y arrastra en el canvas para crear bounding boxes
-6. **Escribir Traducción**: Ingresa el texto traducido en el textarea (panel izquierdo)
-7. **Asignación Automática**: Las etiquetas se asignan automáticamente en orden de lectura
-8. **Guardar**: Presiona "Completar" o `Shift+Enter` para guardar y avanzar
+6. **Escribir Traducción**: Ingresa texto o click en caracteres del panel derecho para insertar
+7. **Asignación Automática**: Las etiquetas y dígrafos se asignan automáticamente en orden de lectura
+8. **Ajustar Tolerancia**: Usa el slider superior izquierdo si el texto está en arco (valores altos = más tolerante)
+9. **Guardar**: "Completar" (`Shift+Enter`) finaliza, "Guardar Pendiente" guarda borrador
 
 ### Atajos de Teclado
 
@@ -160,13 +163,15 @@ bun run preview
 
 ### Trabajando con Dígrafos
 
-Algunos caracteres Keposhka son dígrafos (2 caracteres por caja):
+Los dígrafos (`CH`, `ch`, `GH`, `gh`, `SH`, `sh`, `TH`, `th`) se detectan automáticamente al:
+- Dibujar nuevas cajas
+- Escribir o editar texto en el campo de traducción
+- Insertar caracteres desde el panel de referencia
+
+Para ajuste manual:
 - Click derecho en una caja para abrir el menú contextual
 - Selecciona la cantidad de caracteres (1, 2 o 3)
 - Aparecerá una insignia roja mostrando la cantidad
-- El ordenador consumirá esa cantidad de caracteres para la caja
-
-Dígrafos válidos: `CH`, `ch`, `GH`, `gh`, `SH`, `sh`, `TH`, `th`
 
 ### Estados de Imagen
 
@@ -235,15 +240,17 @@ Auto-generado al iniciar el backend con los 70 caracteres Keposhka.
 
 El algoritmo de ordenamiento espacial (`sorter.ts`) funciona así:
 
-1. **Detección de Filas**: Agrupa cajas en filas horizontales usando umbral dinámico (~30% de altura promedio)
+1. **Detección de Filas**: Agrupa cajas en filas horizontales usando umbral dinámico (70% de altura promedio × multiplicador de tolerancia)
 2. **Ordenamiento Izquierda-Derecha**: Ordena cajas dentro de cada fila por coordenada X
 3. **Asignación de Caracteres**: Consume caracteres del texto traducido (saltando espacios)
-4. **Manejo de Dígrafos**: Respeta la propiedad `charCount` (consume 2-3 chars para dígrafos)
+4. **Detección de Dígrafos**: Detecta automáticamente dígrafos y establece `charCount=2` cuando corresponde
 5. **Validación**: Asegura que el total de caracteres coincida con la capacidad total de cajas
 
 Feedback visual:
-- **Borde verde**: Caja tiene etiqueta asignada
+- **Borde verde**: Caja con etiqueta asignada
 - **Borde rojo punteado**: Caja sin asignar (estado desbalanceado)
+- **Texto rojo**: Caracteres inválidos en el campo de traducción
+- **Texto ámbar**: Caracteres no asignados a cajas
 
 ## Configuración
 
