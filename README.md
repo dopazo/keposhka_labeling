@@ -84,18 +84,60 @@ keposhka_labeling/
 
 ## Instalación
 
-### Prerrequisitos
-- Python 3.13+
-- Node.js 18+ (para Bun)
-- [uv](https://github.com/astral-sh/uv) - Gestor de paquetes Python
-- [Bun](https://bun.sh) - Gestor de paquetes JavaScript
+### Paso 1: Instalar Dependencias del Sistema
 
-### Backend
+Necesitarás instalar **solo 3 herramientas** (uv instalará Python automáticamente):
+
+#### 1. uv (Gestor de paquetes Python)
+Instala con un solo comando:
+
+```bash
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Verifica la instalación: `uv --version`
+
+Más información: [github.com/astral-sh/uv](https://github.com/astral-sh/uv)
+
+> **Nota**: uv instalará automáticamente Python 3.13+ la primera vez que ejecutes `uv sync`, no necesitas instalarlo manualmente.
+
+#### 2. Node.js 18+
+- **Windows/macOS**: Descarga el instalador LTS desde [nodejs.org](https://nodejs.org/)
+- **macOS**: `brew install node`
+- **Linux**:
+  ```bash
+  # Ubuntu/Debian
+  curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+  sudo apt-get install -y nodejs
+  ```
+
+Verifica la instalación: `node --version`
+
+#### 3. Bun (Gestor de paquetes JavaScript)
+Instala con un solo comando:
+
+```bash
+# Windows (PowerShell)
+powershell -c "irm bun.sh/install.ps1|iex"
+
+# macOS/Linux
+curl -fsSL https://bun.sh/install | bash
+```
+
+Verifica la instalación: `bun --version`
+
+Más información: [bun.sh](https://bun.sh)
+
+### Paso 2: Configurar el Backend
 
 ```bash
 cd backend
 
-# Instalar dependencias con uv (primera vez)
+# Instalar dependencias (primera vez)
 uv sync
 
 # Ejecutar servidor de desarrollo
@@ -104,12 +146,14 @@ uv run uvicorn main:app --reload
 
 El backend estará disponible en `http://127.0.0.1:8000`
 
-### Frontend
+### Paso 3: Configurar el Frontend
+
+Abre una **nueva terminal** y ejecuta:
 
 ```bash
 cd frontend
 
-# Instalar dependencias con Bun (primera vez)
+# Instalar dependencias (primera vez)
 bun install
 
 # Ejecutar servidor de desarrollo
@@ -117,6 +161,13 @@ bun run dev
 ```
 
 El frontend estará disponible en `http://localhost:5173`
+
+### Verificación Rápida
+
+Una vez que ambos servidores estén corriendo:
+1. Abre `http://localhost:5173` en tu navegador
+2. Deberías ver la interfaz del labeler
+3. Coloca algunas imágenes en `backend/data/images/` para comenzar a etiquetar
 
 ### Build para Producción
 
@@ -280,8 +331,8 @@ proxy: {
 ## Solución de Problemas
 
 **El backend no inicia:**
-- Verifica que `uv` está instalado: `pip install uv`
-- Revisa la versión de Python: `python --version` (necesita 3.13+)
+- Verifica que `uv` está instalado correctamente (ejecuta `uv --version`)
+- Si uv falla al instalar Python, instálalo manualmente desde [python.org](https://www.python.org/downloads/) (necesita 3.13+)
 
 **El frontend no inicia:**
 - Verifica que Bun está instalado: `curl -fsSL https://bun.sh/install | bash`
