@@ -64,11 +64,13 @@ async def list_images():
         # Check if annotation exists and read status from it
         annotation_path = ANNOTATIONS_DIR / f"{img_path.stem}.json"
         status = "pending"
+        has_text = False
         if annotation_path.exists():
             try:
                 with open(annotation_path, 'r', encoding='utf-8') as f:
                     metadata = json.load(f)
                     status = metadata.get("status", "done")  # Default to done for legacy files
+                    has_text = bool(metadata.get("translatedText", "").strip())
             except Exception:
                 status = "done"  # If can't read, assume done (legacy)
 
@@ -81,7 +83,8 @@ async def list_images():
                 filename=img_path.name,
                 width=width,
                 height=height,
-                status=status
+                status=status,
+                has_text=has_text
             ))
         except Exception as e:
             print(f"Error reading image {img_path}: {e}")

@@ -31,3 +31,4 @@ class ImageInfo(BaseModel):
     width: int
     height: int
     status: str  # 'pending' or 'done'
+    has_text: bool = False  # True if a translation was already saved (even as draft)

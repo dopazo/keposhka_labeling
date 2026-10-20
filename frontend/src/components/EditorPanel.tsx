@@ -574,9 +574,12 @@ export function EditorPanel() {
                     <span className="flex-1 truncate uppercase tracking-wide">
                       {image.filename}
                     </span>
-                    {/* Status indicator */}
-                    <span className={`text-sm font-bold ${isActive ? 'text-keposhka-white' : isDone ? 'text-green-500' : 'text-keposhka-cream/40'}`}>
-                      {isDone ? '✓' : '○'}
+                    {/* Status indicator: ✓ done, ✎ pending with saved translation, ○ pending untouched */}
+                    <span
+                      title={isDone ? 'Done' : image.has_text ? 'Pending: translation saved, boxes missing' : 'Pending'}
+                      className={`text-sm font-bold ${isActive ? 'text-keposhka-white' : isDone ? 'text-green-500' : image.has_text ? 'text-amber-400' : 'text-keposhka-cream/40'}`}
+                    >
+                      {isDone ? '✓' : image.has_text ? '✎' : '○'}
                     </span>
                   </button>
                 );

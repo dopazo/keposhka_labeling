@@ -469,10 +469,10 @@ export const useStore = create<AppState>((set, get) => ({
         const currentFilename = state.currentImage.filename;
         set((state) => ({
           images: state.images.map((img) =>
-            img.filename === currentFilename ? { ...img, status: 'done' as const } : img
+            img.filename === currentFilename ? { ...img, status: 'done' as const, has_text: true } : img
           ),
           currentImage: state.currentImage
-            ? { ...state.currentImage, status: 'done' as const }
+            ? { ...state.currentImage, status: 'done' as const, has_text: true }
             : null,
           isSaving: false,
           lastSaveResult: { success: true, message: 'Saved successfully' },
@@ -555,12 +555,13 @@ export const useStore = create<AppState>((set, get) => ({
       if (response.ok) {
         // Keep image status as 'pending'
         const currentFilename = state.currentImage.filename;
+        const hasText = state.inputText.trim() !== '';
         set((state) => ({
           images: state.images.map((img) =>
-            img.filename === currentFilename ? { ...img, status: 'pending' as const } : img
+            img.filename === currentFilename ? { ...img, status: 'pending' as const, has_text: hasText } : img
           ),
           currentImage: state.currentImage
-            ? { ...state.currentImage, status: 'pending' as const }
+            ? { ...state.currentImage, status: 'pending' as const, has_text: hasText }
             : null,
           isSaving: false,
           lastSaveResult: { success: true, message: 'Draft saved' },

@@ -18,6 +18,7 @@ export interface ImageMeta {
   width: number;
   height: number;
   status: 'pending' | 'done'; // Status to show in sidebar list
+  has_text: boolean;          // A translation is already saved (e.g. draft with text but no boxes)
 }
 
 export interface AnnotationMetadata {
