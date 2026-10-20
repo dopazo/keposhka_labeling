@@ -54,9 +54,63 @@ export function parseTextToTokens(text: string): Array<{ char: string; index: nu
   return parseTextToChars(text);
 }
 
+/** Below this many boxes there is not enough evidence to estimate the text tilt. */
+const MIN_BOXES_FOR_DESKEW = 8;
+/** Tilt search range (degrees, +/-) and step. */
+const MAX_TILT_DEG = 25;
+const TILT_STEP_DEG = 0.25;
+/** A tilt is only applied if it piles box centers into rows at least this much better than no tilt. */
+const MIN_DESKEW_GAIN = 1.15;
+
+/**
+ * Estimate how much the text lines are tilted (degrees) with a projection profile:
+ * the rotation that makes box centers pile up into the fewest horizontal bands wins.
+ * Returns 0 when the text is straight (or too short) so straight images behave exactly as before.
+ */
+export function estimateTiltDegrees(boxes: BoundingBox[]): number {
+  if (boxes.length < MIN_BOXES_FOR_DESKEW) return 0;
+
+  const heights = boxes.map((b) => b.height).sort((a, b) => a - b);
+  const binSize = Math.max(1, heights[Math.floor(heights.length / 2)] * 0.5);
+  const cx = boxes.map((b) => b.x + b.width / 2);
+  const cy = boxes.map((b) => b.y + b.height / 2);
+
+  // Sum of squared histogram counts: high when centers concentrate in few bands (= straight rows)
+  const score = (deg: number): number => {
+    const t = (deg * Math.PI) / 180;
+    const sin = Math.sin(t);
+    const cos = Math.cos(t);
+    const ys = cx.map((x, i) => -x * sin + cy[i] * cos);
+    const minY = Math.min(...ys);
+    const counts = new Map<number, number>();
+    for (const y of ys) {
+      const bin = Math.floor((y - minY) / binSize);
+      counts.set(bin, (counts.get(bin) ?? 0) + 1);
+    }
+    let total = 0;
+    counts.forEach((c) => (total += c * c));
+    return total;
+  };
+
+  const baseScore = score(0);
+  let bestDeg = 0;
+  let bestScore = baseScore;
+  for (let deg = -MAX_TILT_DEG; deg <= MAX_TILT_DEG + 1e-9; deg += TILT_STEP_DEG) {
+    const s = score(deg);
+    if (s > bestScore) {
+      bestScore = s;
+      bestDeg = deg;
+    }
+  }
+
+  return bestScore >= baseScore * MIN_DESKEW_GAIN ? bestDeg : 0;
+}
+
 /**
  * Group boxes into rows based on vertical position
- * Boxes are considered in the same row if their Y-centers are within the threshold
+ * Boxes are considered in the same row if their Y-centers are within the threshold.
+ * Tilted text (photos taken at an angle) is straightened first: positions are measured in a
+ * frame rotated by the estimated tilt, so the end of one line is not mistaken for the next line.
  *
  * @param boxes - Array of bounding boxes
  * @param thresholdMultiplier - Multiplier for row threshold (default 1.0 = 70% of avg height)
@@ -76,27 +130,29 @@ export function groupBoxesIntoRows(boxes: BoundingBox[], thresholdMultiplier: nu
   // At multiplier 3.0: 210% (very tolerant, good for arcs - most boxes in same row)
   const rowThreshold = avgHeight * 0.7 * thresholdMultiplier;
 
+  // Box centers in the straightened frame (identical to plain x/y when tilt is 0)
+  const tilt = (estimateTiltDegrees(boxes) * Math.PI) / 180;
+  const sin = Math.sin(tilt);
+  const cos = Math.cos(tilt);
+  const centerX = (box: BoundingBox) => (box.x + box.width / 2) * cos + (box.y + box.height / 2) * sin;
+  const centerY = (box: BoundingBox) => -(box.x + box.width / 2) * sin + (box.y + box.height / 2) * cos;
+
   // Sort boxes by Y position first (top to bottom)
-  const sortedByY = [...boxes].sort((a, b) => {
-    const aCenterY = a.y + a.height / 2;
-    const bCenterY = b.y + b.height / 2;
-    return aCenterY - bCenterY;
-  });
+  const sortedByY = [...boxes].sort((a, b) => centerY(a) - centerY(b));
 
   const rows: BoundingBox[][] = [];
   let currentRow: BoundingBox[] = [sortedByY[0]];
-  let currentRowCenterY = sortedByY[0].y + sortedByY[0].height / 2;
+  let currentRowCenterY = centerY(sortedByY[0]);
 
   for (let i = 1; i < sortedByY.length; i++) {
     const box = sortedByY[i];
-    const boxCenterY = box.y + box.height / 2;
+    const boxCenterY = centerY(box);
 
     // Check if this box belongs to the current row
     if (Math.abs(boxCenterY - currentRowCenterY) <= rowThreshold) {
       currentRow.push(box);
       // Update row center Y as average of all boxes in row
-      currentRowCenterY =
-        currentRow.reduce((sum, b) => sum + b.y + b.height / 2, 0) / currentRow.length;
+      currentRowCenterY = currentRow.reduce((sum, b) => sum + centerY(b), 0) / currentRow.length;
     } else {
       // Start a new row
       rows.push(currentRow);
@@ -110,14 +166,8 @@ export function groupBoxesIntoRows(boxes: BoundingBox[], thresholdMultiplier: nu
     rows.push(currentRow);
   }
 
-  // Sort each row left-to-right by X position
-  return rows.map((row) =>
-    row.sort((a, b) => {
-      const aCenterX = a.x + a.width / 2;
-      const bCenterX = b.x + b.width / 2;
-      return aCenterX - bCenterX;
-    })
-  );
+  // Sort each row left-to-right by X position (along the text direction)
+  return rows.map((row) => row.sort((a, b) => centerX(a) - centerX(b)));
 }
 
 /**
