@@ -78,6 +78,10 @@ async def list_images():
         try:
             with Image.open(img_path) as img:
                 width, height = img.size
+                # Phone photos store rotation in EXIF (orientations 5-8 swap axes).
+                # Browsers display them rotated, so report the displayed size.
+                if img.getexif().get(274) in (5, 6, 7, 8):
+                    width, height = height, width
 
             images.append(ImageInfo(
                 filename=img_path.name,
